@@ -1,54 +1,73 @@
-# React + TypeScript + Vite
+# Quizzer Chrome Extension
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A Chrome extension that generates contextual quizzes based on article content that users are reading. It leverages Anthropic's Claude 3.7 Sonnet LLM to create questions that encourage critical thinking and deeper engagement with digital content.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Automatically extracts content from articles and webpages
+- Generates contextually relevant quiz questions using Claude 3.7 Sonnet
+- Supports text input for answering questions
+- Provides intelligent response evaluation with feedback
+- Implements a user-friendly Chrome sidebar interface
 
-## Expanding the ESLint configuration
+## Setup and Installation
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+- Node.js (v14.0.0 or higher)
+- Chrome Browser
+- Anthropic API Key (for Claude 3.7 Sonnet)
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Environment Configuration
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1. Copy the `.env.example` file to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+2. Update the `.env` file with your Anthropic API key:
+   ```
+   ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
+   VITE_ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+   ```
+
+3. Adjust other configuration variables as needed (model, tokens, temperature)
+
+### Development
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+3. Build the extension:
+   ```bash
+   npm run build
+   ```
+
+4. Load the extension in Chrome:
+   - Go to `chrome://extensions/`
+   - Enable "Developer mode"
+   - Click "Load unpacked"
+   - Select the `dist` directory
+
+## Project Structure
+
+- `src/`: Source code
+  - `background/`: Chrome extension background scripts
+  - `content/`: Content scripts for webpage interaction
+  - `components/`: React UI components
+  - `services/`: Service modules including Claude API integration
+  - `assets/`: Static assets
+
+## Technology Stack
+
+- React + TypeScript
+- Vite for building
+- Chrome Extension Manifest V3
+- Anthropic Claude 3.7 Sonnet API

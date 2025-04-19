@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "lib": ["ES2020", "DOM"],
+    "types": ["chrome", "node"],
+    "outDir": "dist/temp",
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "noEmit": false,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": [
+    "src/background/**/*.ts",
+    "src/content/**/*.ts",
+    "src/types/**/*.ts",
+    "src/services/**/*.ts",
+    "src/env.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+} 

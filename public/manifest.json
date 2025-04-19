@@ -1,17 +1,35 @@
 {
 "manifest_version": 3,
 "name": "Quizzer",
-"description": "Chrome Extension with Sidebar",
+"description": "Generate comprehension quizzes from any article with AI-powered evaluation",
 "version": "1.0",
 "action": {
-"default_title": "Open Quizzer Sidebar"
+"default_title": "Open Quizzer Sidebar",
+"default_icon": {
+"16": "icons/icon16.png",
+"48": "icons/icon48.png",
+"128": "icons/icon128.png"
+}
 },
-"permissions": ["tabs", "sidePanel"],
+"permissions": ["tabs", "sidePanel", "storage", "activeTab", "scripting"],
+"host_permissions": ["<all_urls>"],
 "side_panel": {
 "default_path": "index.html"
 },
+"content_scripts": [
+{
+"matches": ["<all_urls>"],
+"js": ["content.js"]
+}
+],
 "background": {
 "service_worker": "background.js",
 "type": "module"
+},
+"web_accessible_resources": [
+{
+"resources": ["icons/*"],
+"matches": ["<all_urls>"]
 }
+]
 }
