@@ -1,0 +1,232 @@
+# Overview
+Quizzer is a Chrome extension that generates contextual quizzes based on article content that users are reading. It leverages Anthropic's Claude 3.7 Sonnet LLM to create questions that encourage critical thinking and deeper engagement with digital content. Users can respond to questions via voice or text input, receiving immediate feedback on their understanding. This tool aims to enhance reading comprehension, retention, and critical analysis skills for students, professionals, and lifelong learners.
+
+# Core Features
+1. **Content Extraction**
+   - Automatically extracts and analyzes the main content from any article or webpage
+   - Filters out irrelevant elements like advertisements, navigation menus, and sidebars
+   - Preserves important context including headings, key points, and supporting details
+   
+2. **AI-Powered Quiz Generation**
+   - Utilizes Claude 3.7 Sonnet to generate 3-5 contextually relevant questions
+   - Creates questions that test comprehension and critical thinking rather than simple recall
+   - Tailors difficulty and complexity to the content's sophistication
+   
+3. **Multimodal Input**
+   - Supports voice input using browser's SpeechRecognition API
+   - Provides text input alternative for accessibility and user preference
+   - Real-time transcription and processing of voice responses
+   
+4. **Intelligent Response Evaluation**
+   - Grades user responses individually using Claude 3.7 Sonnet
+   - Provides specific, constructive feedback highlighting strengths and gaps in understanding
+   - Encourages deeper analysis through follow-up prompts when appropriate
+
+5. **User-Friendly Interface**
+   - Chrome sidebar implementation for non-intrusive user experience
+   - Clear, intuitive navigation through quiz workflow
+   - Progress tracking and session management
+
+# User Experience
+## User Personas
+1. **Student** - College student using the extension to improve comprehension of assigned readings
+2. **Professional** - Knowledge worker staying current in their field through industry articles
+3. **Lifelong Learner** - Recreational reader seeking deeper engagement with content
+
+## Key User Flows
+1. **Quiz Generation**
+   - User navigates to an article of interest
+   - Opens the extension sidebar and clicks "Generate Quiz"
+   - Reviews auto-generated quiz preview and starts quiz
+
+2. **Answering Questions**
+   - User reads the question in the sidebar
+   - Chooses between voice or text input method
+   - If voice: clicks microphone button, speaks answer, reviews transcription
+   - If text: types response in text field
+   - Submits response and views feedback before proceeding to next question
+
+3. **Reviewing Performance**
+   - After completing all questions, user views summary of performance
+   - Reviews detailed feedback for each question
+   - Has option to regenerate quiz or close session
+
+# Technical Architecture
+## System Components
+1. **Frontend**
+   - React-based sidebar UI
+   - Chrome extension framework integration
+   - Speech recognition interface
+
+2. **Backend Processing**
+   - Content extraction logic
+   - API integration with Anthropic's Claude
+   - Response evaluation pipeline
+
+3. **Data Management**
+   - Local browser storage for session data and preferences
+   - Secure handling of user inputs and API keys
+
+## Data Models
+1. **Article Content**
+   - Extracted text
+   - Metadata (title, URL, timestamp)
+
+2. **Quiz**
+   - Question set
+   - Associated article reference
+   - Creation timestamp
+
+3. **Question**
+   - Question text
+   - Expected answer elements
+   - Grading criteria
+
+4. **Response**
+   - User input (text/voice)
+   - Transcription (for voice)
+   - Feedback from LLM
+   - Score/evaluation
+
+## APIs and Integrations
+1. **Anthropic Claude API**
+   - Quiz generation endpoint
+   - Response evaluation endpoint
+
+2. **Browser APIs**
+   - Chrome Extension API
+   - Web Speech API for voice recognition
+   - Storage API for local data
+
+## Infrastructure Requirements
+1. **Client-side**
+   - Chrome browser environment
+   - Local storage capacity for session data
+
+2. **External Services**
+   - Anthropic Claude API access
+   - Potential proxy service for API key management
+
+# Development Roadmap
+## MVP Requirements
+1. **Basic Content Extraction**
+   - Extract readable text from standard article layouts
+   - Basic content cleaning and preprocessing
+
+2. **Initial Quiz Generation**
+   - Generate 3 questions per article using Claude
+   - Focus on comprehension-level questions
+   - Static prompt engineering for consistent results
+
+3. **Text-Based User Input**
+   - Simple text field for answers
+   - Basic submit functionality
+
+4. **Simple Feedback Mechanism**
+   - Send user responses to Claude for evaluation
+   - Display pass/fail with brief explanation
+
+5. **Minimal Viable UI**
+   - Chrome sidebar implementation
+   - Question display and navigation
+   - Basic results summary
+
+## Future Enhancements
+1. **Advanced Content Analysis**
+   - Improved extraction from complex layouts
+   - Support for paywalled content where permitted
+   - Image and chart content consideration
+
+2. **Enhanced Quiz Generation**
+   - Varied question types (multiple-choice, short answer, etc.)
+   - Difficulty settings
+   - Topic focus options
+
+3. **Voice Input Implementation**
+   - Voice recording and real-time transcription
+   - Voice command navigation
+   - Confidence scoring for transcriptions
+
+4. **Sophisticated Feedback**
+   - Detailed explanations with references to the text
+   - Learning recommendations based on performance
+   - Progressive hint system
+
+5. **User Experience Improvements**
+   - Quiz history and performance tracking
+   - Customizable appearance and behavior
+   - Shareable results and challenges
+
+# Logical Dependency Chain
+1. **Foundation Layer**
+   - Content extraction module
+   - Claude API integration setup
+   - Basic Chrome extension structure
+
+2. **Core Functionality**
+   - Text-based quiz generation
+   - User input handling (text-only initially)
+   - Simple grading and feedback
+
+3. **Enhanced User Experience**
+   - Complete sidebar UI implementation
+   - Quiz flow optimization
+   - Results presentation
+
+4. **Voice Input Feature**
+   - Speech recognition integration
+   - Transcription processing
+   - Voice UI elements
+
+5. **Refinement**
+   - Performance optimizations
+   - Edge case handling
+   - UX polish and accessibility improvements
+
+# Risks and Mitigations
+## Technical Challenges
+1. **Content Extraction Reliability**
+   - **Risk**: Inconsistent extraction across different website formats
+   - **Mitigation**: Start with common article formats, gradually expand support, use fallback parsing methods
+
+2. **API Limitations**
+   - **Risk**: Claude API costs, rate limits, and latency affecting user experience
+   - **Mitigation**: Implement caching, optimize prompts for token efficiency, add request queuing
+
+3. **Voice Recognition Accuracy**
+   - **Risk**: Poor transcription quality in noisy environments or with accents
+   - **Mitigation**: Clear recording instructions, text verification before submission, text input fallback
+
+## MVP Scope
+1. **Feature Creep**
+   - **Risk**: Expanding scope beyond core functionality, delaying MVP
+   - **Mitigation**: Strict prioritization matrix, regular scope reviews, clear definition of MVP success criteria
+
+2. **User Adoption Barriers**
+   - **Risk**: Complex workflow reducing initial user engagement
+   - **Mitigation**: Focus on simplicity in MVP UI, provide clear onboarding, gather early user feedback
+
+## Resource Constraints
+1. **Development Capacity**
+   - **Risk**: Limited resources to implement all features simultaneously
+   - **Mitigation**: Modular architecture allowing independent work streams, prioritize core user value
+
+2. **API Costs**
+   - **Risk**: Scaling costs with Anthropic API usage
+   - **Mitigation**: Implement usage limits, optimize prompts, explore cost-sharing models for premium features
+
+# Appendix
+## Claude Prompt Engineering
+- Preliminary prompt templates for quiz generation
+- Evaluation criteria prompts for grading
+- Context handling strategies for large articles
+
+## Accessibility Considerations
+- Voice alternative inputs for users with mobility restrictions
+- Text-based alternatives for all voice features
+- Screen reader compatibility requirements
+
+## Privacy Framework
+- Data handling principles
+- User consent requirements
+- Content processing limitations 
