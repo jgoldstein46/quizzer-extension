@@ -1,0 +1,17 @@
+{
+"manifest_version": 3,
+"name": "Quizzer",
+"description": "Chrome Extension with Sidebar",
+"version": "1.0",
+"action": {
+"default_title": "Open Quizzer Sidebar"
+},
+"permissions": ["tabs", "sidePanel"],
+"side_panel": {
+"default_path": "index.html"
+},
+"background": {
+"service_worker": "background.js",
+"type": "module"
+}
+}
