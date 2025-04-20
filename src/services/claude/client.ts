@@ -65,14 +65,15 @@ let claudeInstance: Anthropic | null = null;
 /**
  * Initialize the Claude API client with the configuration
  */
-export function initializeClaudeClient(): Anthropic {
+export async function initializeClaudeClient(): Promise<Anthropic> {
   if (claudeInstance) {
     return claudeInstance;
   }
 
-  const config = loadClaudeConfig();
+  const config = await loadClaudeConfig();
   claudeInstance = new Anthropic({
     apiKey: config.apiKey,
+    dangerouslyAllowBrowser: true,
   });
 
   return claudeInstance;
@@ -99,8 +100,8 @@ export async function sendMessageToClaude(
   messages: ClaudeMessage[],
   options: ClaudeRequestOptions = {}
 ): Promise<ClaudeResponse> {
-  const client = initializeClaudeClient();
-  const config = loadClaudeConfig();
+  const client = await initializeClaudeClient();
+  const config = await loadClaudeConfig();
   const tokenEstimate = estimateMessageTokens(messages);
   const trackUsage = options.trackUsage !== false; // Track usage by default
   
@@ -139,6 +140,7 @@ export async function sendMessageToClaude(
       max_tokens: maxTokens,
       temperature,
       system: options.system,
+
       messages: messages.map(msg => ({
         role: msg.role,
         content: msg.content,
@@ -262,11 +264,11 @@ export async function sendMessageToClaudeWithRetry(
 /**
  * Estimate the token usage and cost for a potential Claude API request without making the actual API call
  */
-export function estimateClaudeRequest(
+export async function estimateClaudeRequest(
   messages: ClaudeMessage[],
   options: ClaudeRequestOptions = {}
-): { inputTokens: number; costEstimate: number; model: string } {
-  const config = loadClaudeConfig();
+): Promise<{ inputTokens: number; costEstimate: number; model: string; }> {
+  const config = await loadClaudeConfig();
   const model = options.model || config.model;
   const inputTokens = estimateMessageTokens(messages);
   

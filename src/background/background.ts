@@ -3,8 +3,11 @@
  * Handles extension lifecycle and core functionality
  */
 
+
+import { loadClaudeConfig } from '@/services/claude/config';
 import { quizController, QuizGenerationRequest } from '../services/quiz';
 
+console.log('Background script loaded');
 // Initialize extension when installed or updated
 chrome.runtime.onInstalled.addListener((details) => {
   console.log('Quizzer extension installed or updated:', details.reason);
@@ -49,6 +52,26 @@ function initializeStorage() {
   });
 }
 
+/**
+ * Tries to get the active tab ID 
+ * @returns Promise with either the tab ID or an error object
+ */
+async function getActiveTabId(): Promise<{ success: boolean; tabId?: number; error?: string }> {
+  try {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tabs.length > 0 && tabs[0].id) {
+      const tabId = tabs[0].id;
+      console.log('Retrieved active tab ID:', tabId);
+      return { success: true, tabId };
+    } else {
+      return { success: false, error: 'No active tab found' };
+    }
+  } catch (error) {
+    console.error('Error getting active tab:', error);
+    return { success: false, error: 'Failed to determine active tab' };
+  }
+}
+
 // Listen for messages from content scripts and the sidebar
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Background received message:', message.action);
@@ -60,7 +83,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
       
     case 'generateQuiz':
-      handleGenerateQuiz(message.data, sender.tab?.id)
+      handleGenerateQuiz()
         .then(result => sendResponse(result))
         .catch(error => sendResponse({ 
           success: false, 
@@ -70,7 +93,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
       
     case 'extractContent':
-      handleExtractContent(sender.tab?.id)
+      handleExtractContent()
         .then(result => sendResponse(result))
         .catch(error => sendResponse({ 
           success: false, 
@@ -154,27 +177,25 @@ function handleArticleDetected(data: { url: string, title: string }, tabId?: num
 }
 
 // Handle content extraction request
-async function handleExtractContent(tabId?: number): Promise<any> {
-  if (!tabId) {
-    // Try to get the active tab ID if none was provided
-    try {
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tabs.length > 0 && tabs[0].id) {
-        tabId = tabs[0].id;
-        console.log('Retrieved active tab ID:', tabId);
-      } else {
-        return { success: false, error: 'No active tab found' };
-      }
-    } catch (error) {
-      console.error('Error getting active tab:', error);
-      return { success: false, error: 'Failed to determine active tab' };
-    }
+async function handleExtractContent(): Promise<any> {
+  // Try to get the active tab ID if none was provided
+  const result = await getActiveTabId();
+  if (!result.success) {
+    return { success: false, error: result.error };
   }
+  const tabId = result.tabId;
+  
   
   try {
     // First, check if content script is loaded by sending a ping
     try {
       const pingResult = await new Promise<any>((resolve) => {
+        // Ensure tabId is defined before using it
+        if (tabId === undefined) {
+          resolve({ loaded: false, error: 'No tab ID available' });
+          return;
+        }
+        
         chrome.tabs.sendMessage(tabId, { action: 'ping' }, (response) => {
           if (chrome.runtime.lastError) {
             resolve({ loaded: false, error: chrome.runtime.lastError.message });
@@ -189,6 +210,11 @@ async function handleExtractContent(tabId?: number): Promise<any> {
       // If content script is not loaded, inject it
       if (!pingResult.loaded) {
         console.log('Content script not detected, injecting it...');
+        // Ensure tabId is defined before using it
+        if (tabId === undefined) {
+          return { success: false, error: 'No tab ID available for script injection' };
+        }
+        
         await chrome.scripting.executeScript({
           target: { tabId },
           files: ['content.js']
@@ -204,6 +230,12 @@ async function handleExtractContent(tabId?: number): Promise<any> {
     
     // Send a message to the content script to extract content
     return new Promise((resolve) => {
+      // Ensure tabId is defined before using it
+      if (tabId === undefined) {
+        resolve({ success: false, error: 'No tab ID available for content extraction' });
+        return;
+      }
+      
       chrome.tabs.sendMessage(tabId, { action: 'extractContent' }, (response) => {
         if (chrome.runtime.lastError) {
           resolve({ 
@@ -238,10 +270,24 @@ async function handleExtractContent(tabId?: number): Promise<any> {
 }
 
 // Handle quiz generation request
-async function handleGenerateQuiz(data: any, tabId?: number): Promise<any> {
-  if (!tabId) {
-    return { success: false, error: 'No active tab found' };
+async function handleGenerateQuiz(): Promise<any> {
+  // Check if API key is configured
+  const { apiKey } = await loadClaudeConfig();
+  
+  if (!apiKey) {
+    return { 
+      success: false, 
+      error: 'API key not configured. Please add your Anthropic API key in the settings.',
+      needsApiKey: true
+    };
   }
+  
+  const result = await getActiveTabId();
+  if (!result.success) {
+    return { success: false, error: result.error };
+  }
+  const tabId = result.tabId;
+
   
   try {
     // Check if we need to extract content first
@@ -253,7 +299,7 @@ async function handleGenerateQuiz(data: any, tabId?: number): Promise<any> {
     
     if (!articleContent) {
       // Extract content first
-      contentResult = await handleExtractContent(tabId);
+      contentResult = await handleExtractContent();
       if (!contentResult.success) {
         return contentResult;
       }
@@ -349,17 +395,15 @@ async function handleGenerateQuiz(data: any, tabId?: number): Promise<any> {
 async function handleGetArticleContent(): Promise<any> {
   try {
     // Get active tab
-    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-    
-    if (tabs.length === 0 || !tabs[0].id) {
-      return { success: false, error: 'No active tab found' };
+    const result = await getActiveTabId();
+    if (!result.success) {
+      return { success: false, error: result.error };
     }
-    
-    const tabId = tabs[0].id;
+    const tabId = result.tabId;
     
     // Get article content from storage
-    const result = await chrome.storage.local.get(`articleContent.${tabId}`);
-    const content = result[`articleContent.${tabId}`];
+    const storageResult = await chrome.storage.local.get(`articleContent.${tabId}`);
+    const content = storageResult[`articleContent.${tabId}`];
     
     if (!content) {
       return { success: false, error: 'No content found for this tab' };

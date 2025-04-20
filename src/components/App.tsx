@@ -24,6 +24,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
+  const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   
   const extractButtonRef = useRef<HTMLButtonElement>(null);
   const generateButtonRef = useRef<HTMLButtonElement>(null);
@@ -39,12 +40,12 @@ function App() {
         chrome.storage.local.get([
           `articleData.${currentTab.id}`,
           `articleContent.${currentTab.id}`,
-          'userPreferences',
+          'settings',
           'onboardingComplete'
         ], (result) => {
           const data = result[`articleData.${currentTab.id}`];
           const content = result[`articleContent.${currentTab.id}`];
-          const prefs = result.userPreferences;
+          const prefs = result.settings;
           const onboardingComplete = result.onboardingComplete;
           
           if (data) {
@@ -159,25 +160,47 @@ function App() {
     });
   };
 
-  const generateQuiz = () => {
+  const generateQuiz = async () => {
     setIsLoading(true);
-    
-    chrome.runtime.sendMessage({ action: 'generateQuiz' }, (response) => {
-      console.log('Quiz generation response:', response);
-      setIsLoading(false);
-      
-      if (response && response.success && response.data?.contentExtracted) {
-        // Get updated article content if it was extracted during quiz generation
-        chrome.runtime.sendMessage({ action: 'getArticleContent' }, (contentResponse) => {
-          if (contentResponse && contentResponse.success) {
-            setArticleContent(contentResponse.data);
-            setExtractionStatus('success');
-            setShowSuccessFeedback(true);
-            setTimeout(() => setShowSuccessFeedback(false), 1500);
-          }
-        });
+    setExtractionError(null);
+
+    // build same payload you had in background.ts
+    const request = {
+      articleContent: articleContent?.excerpt,
+      articleTitle: articleData?.title,
+      articleUrl: articleData?.url,
+      questionCount: userPreferences?.questionsPerQuiz,
+      articleMetadata: {
+        wordCount: articleContent?.wordCount,
+        readTime: articleContent?.readTime
       }
-    });
+    };
+
+    try {
+      const res = await fetch('http://localhost:4000/generate-quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request)
+      });
+      const result = await res.json();
+      
+      if (!result.success) {
+        if (result.needsApiKey) {
+          setShowApiKeyDialog(true);
+        } else {
+          setExtractionError(result.error);
+        }
+      } else {
+        // show a brief success animation
+        setShowSuccessFeedback(true);
+        setTimeout(() => setShowSuccessFeedback(false), 1500);
+      }
+    } catch (e) {
+      console.error('Error generating quiz:', e);
+      setExtractionError('Failed to generate quiz');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const renderContentCard = () => {
@@ -251,6 +274,16 @@ function App() {
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
+  };
+
+  const ApiKeyDialog = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+    return isOpen ? (
+      <div className="api-key-dialog">
+        <h3>API Key Required</h3>
+        <p>You need to add your Anthropic API key to use this feature.</p>
+        <button onClick={onClose}>Cancel</button>
+      </div>
+    ) : null;
   };
 
   const appContent = (
@@ -413,6 +446,7 @@ function App() {
         onClose={() => setShowOnboarding(false)}
         onComplete={handleOnboardingComplete} 
       />
+      <ApiKeyDialog isOpen={showApiKeyDialog} onClose={() => setShowApiKeyDialog(false)} />
     </div>
   );
 
@@ -423,4 +457,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;

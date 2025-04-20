@@ -10,42 +10,20 @@ interface ClaudeConfig {
 }
 
 /**
- * Safely access environment variables in both Vite and extension contexts
+ * Loads and validates Claude API configuration from Chrome storage
  */
-function getEnvVar(key: string, defaultValue: string = ''): string {
-  // Try to access Vite environment variables if available
-  try {
-    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
-      return import.meta.env[key] as string;
-    }
-  } catch (e) {
-    // Silent catch - import.meta may not be available in extension context
-  }
+export async function loadClaudeConfig(): Promise<ClaudeConfig> {
+  // Get settings from Chrome storage
+  const result = await chrome.storage.local.get(['settings']);
+  const settings = result.settings || {};
   
-  // Try Node.js process.env (for build-time)
-  if (typeof process !== 'undefined' && process.env && process.env[key]) {
-    return process.env[key] as string;
-  }
+  // Default values
+  const model = settings.claudeModel || 'claude-3-7-sonnet-20250219';
+  const maxTokens = settings.maxTokens || 64000;
+  const temperature = settings.temperature || 0.2;
   
-  // Try extension storage as fallback (runtime)
-  // This would require implementation with chrome.storage in a real extension
-  
-  return defaultValue;
-}
-
-/**
- * Loads and validates Claude API configuration from environment variables
- */
-export function loadClaudeConfig(): ClaudeConfig {
-  const apiKey = getEnvVar('VITE_ANTHROPIC_API_KEY', getEnvVar('ANTHROPIC_API_KEY', ''));
-  const model = getEnvVar('VITE_CLAUDE_MODEL', getEnvVar('MODEL', 'claude-3-7-sonnet-20250219'));
-  const maxTokens = parseInt(getEnvVar('VITE_MAX_TOKENS', getEnvVar('MAX_TOKENS', '64000')), 10);
-  const temperature = parseFloat(getEnvVar('VITE_TEMPERATURE', getEnvVar('TEMPERATURE', '0.2')));
-
-  // Validate API key
-  if (!apiKey) {
-    throw new Error('Anthropic API key is required. Set VITE_ANTHROPIC_API_KEY in .env file.');
-  }
+  // Get API key from settings
+  const apiKey = settings.apiKey || '';
 
   return {
     apiKey,
@@ -59,9 +37,9 @@ export function loadClaudeConfig(): ClaudeConfig {
  * Checks if the Claude API is properly configured
  * Returns true if configuration is valid, false otherwise
  */
-export function isClaudeConfigured(): boolean {
+export async function isClaudeConfigured(): Promise<boolean> {
   try {
-    const config = loadClaudeConfig();
+    const config = await loadClaudeConfig();
     return Boolean(config.apiKey);
   } catch (error) {
     console.error('Claude API configuration error:', error);

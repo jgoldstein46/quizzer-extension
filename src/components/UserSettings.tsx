@@ -1,20 +1,26 @@
 import { useEffect, useState } from 'react';
 import '../App.css';
 
-export type UserPreferences = {
+export interface UserPreferences {
   theme: 'light' | 'dark' | 'system';
   fontSize: 'small' | 'medium' | 'large';
   reduceMotion: boolean;
   highContrast: boolean;
   largeTargets: boolean;
-};
+  questionsPerQuiz: number;
+  saveHistory: boolean;
+  apiKey: string;
+}
 
 const defaultPreferences: UserPreferences = {
   theme: 'system',
   fontSize: 'medium',
   reduceMotion: false,
   highContrast: false,
-  largeTargets: false
+  largeTargets: false,
+  questionsPerQuiz: 3,
+  saveHistory: true,
+  apiKey: ''
 };
 
 interface UserSettingsProps {
@@ -26,17 +32,21 @@ function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
   
   useEffect(() => {
-    // Load saved preferences from storage
-    chrome.storage.local.get('userPreferences', (result) => {
-      if (result.userPreferences) {
-        setPreferences(result.userPreferences);
-      }
-    });
-  }, []);
+    if (isOpen) {
+      // Load settings when component opens
+      chrome.storage.local.get('settings', (result) => {
+        if (result.settings) {
+          setPreferences(prev => ({ ...prev, ...result.settings }));
+        }
+      });
+    }
+  }, [isOpen]);
   
   const savePreferences = (newPrefs: UserPreferences) => {
     // Save to chrome storage
-    chrome.storage.local.set({ userPreferences: newPrefs });
+    chrome.storage.local.set({ settings: newPrefs }, () => {
+      onClose();
+    });
     
     // Apply theme
     if (newPrefs.theme === 'dark') {
@@ -237,6 +247,25 @@ function UserSettings({ isOpen, onClose }: UserSettingsProps) {
                   ></span>
                 </label>
               </div>
+            </div>
+          </div>
+          
+          {/* API Configuration */}
+          <div className="space-y-3">
+            <h3 className="font-medium">API Configuration</h3>
+            
+            <div className="form-group">
+              <label htmlFor="apiKey">Anthropic API Key</label>
+              <input
+                type="password"
+                id="apiKey"
+                value={preferences.apiKey || ''}
+                onChange={(e) => handleChange('apiKey', e.target.value)}
+                placeholder="sk-ant-api03-..."
+              />
+              <p className="help-text">
+                Get your API key from <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer">console.anthropic.com</a>
+              </p>
             </div>
           </div>
           
