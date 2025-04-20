@@ -1,4 +1,4 @@
-import { KeyboardEvent as ReactKeyboardEvent, useEffect, useRef, useState } from 'react';
+import { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
 import '../App.css';
 import ErrorBoundary from './ErrorBoundary';
 import Onboarding from './Onboarding';
@@ -23,13 +23,70 @@ function App() {
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
+  const [, setUserPreferences] = useState<UserPreferences | null>(null);
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   
   const extractButtonRef = useRef<HTMLButtonElement>(null);
   const generateButtonRef = useRef<HTMLButtonElement>(null);
   const helpButtonRef = useRef<HTMLButtonElement>(null);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
+
+  const handleGlobalKeyDown = useCallback((e: ReactKeyboardEvent<HTMLDivElement> | globalThis.KeyboardEvent) => {
+    // Check if not inside an input field
+    const target = e.target as HTMLElement;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+      return;
+    }
+
+    // Don't process keyboard shortcuts if onboarding is shown
+    if (showOnboarding) {
+      return;
+    }
+
+    // Keyboard shortcuts
+    switch (e.key) {
+      case 'e':
+        // Extract content
+        if (extractionStatus === 'idle' && !articleContent && extractButtonRef.current) {
+          extractButtonRef.current.click();
+          e.preventDefault();
+        }
+        break;
+      case 'g':
+        // Generate quiz
+        if (!isLoading && generateButtonRef.current) {
+          generateButtonRef.current.click();
+          e.preventDefault();
+        }
+        break;
+      case 's':
+        // Toggle settings
+        if (settingsButtonRef.current) {
+          settingsButtonRef.current.click();
+          e.preventDefault();
+        }
+        break;
+      case '?':
+        // Toggle keyboard shortcuts help
+        setShowKeyboardShortcuts(prev => !prev);
+        e.preventDefault();
+        break;
+      case 'Escape':
+        // Close dialogs
+        if (showKeyboardShortcuts) {
+          setShowKeyboardShortcuts(false);
+          e.preventDefault();
+        } else if (showSettings) {
+          setShowSettings(false);
+          e.preventDefault();
+        }
+        break;
+      default:
+        break;
+    }
+  },
+  [showOnboarding, extractionStatus, articleContent, isLoading, showKeyboardShortcuts, showSettings] 
+);
 
   useEffect(() => {
     // Get current tab to check if we have data for it
@@ -83,62 +140,9 @@ function App() {
     return () => {
       window.removeEventListener('keydown', handleGlobalKeyDownEvent);
     };
-  }, []);
+  }, [handleGlobalKeyDown]);
 
-  const handleGlobalKeyDown = (e: ReactKeyboardEvent<HTMLDivElement> | globalThis.KeyboardEvent) => {
-    // Check if not inside an input field
-    const target = e.target as HTMLElement;
-    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
-      return;
-    }
-
-    // Don't process keyboard shortcuts if onboarding is shown
-    if (showOnboarding) {
-      return;
-    }
-
-    // Keyboard shortcuts
-    switch (e.key) {
-      case 'e':
-        // Extract content
-        if (extractionStatus === 'idle' && !articleContent && extractButtonRef.current) {
-          extractButtonRef.current.click();
-          e.preventDefault();
-        }
-        break;
-      case 'g':
-        // Generate quiz
-        if (!isLoading && generateButtonRef.current) {
-          generateButtonRef.current.click();
-          e.preventDefault();
-        }
-        break;
-      case 's':
-        // Toggle settings
-        if (settingsButtonRef.current) {
-          settingsButtonRef.current.click();
-          e.preventDefault();
-        }
-        break;
-      case '?':
-        // Toggle keyboard shortcuts help
-        setShowKeyboardShortcuts(prev => !prev);
-        e.preventDefault();
-        break;
-      case 'Escape':
-        // Close dialogs
-        if (showKeyboardShortcuts) {
-          setShowKeyboardShortcuts(false);
-          e.preventDefault();
-        } else if (showSettings) {
-          setShowSettings(false);
-          e.preventDefault();
-        }
-        break;
-      default:
-        break;
-    }
-  };
+  
 
   const extractContent = () => {
     setExtractionStatus('extracting');
@@ -162,45 +166,24 @@ function App() {
 
   const generateQuiz = async () => {
     setIsLoading(true);
-    setExtractionError(null);
-
-    // build same payload you had in background.ts
-    const request = {
-      articleContent: articleContent?.excerpt,
-      articleTitle: articleData?.title,
-      articleUrl: articleData?.url,
-      questionCount: userPreferences?.questionsPerQuiz,
-      articleMetadata: {
-        wordCount: articleContent?.wordCount,
-        readTime: articleContent?.readTime
-      }
-    };
-
-    try {
-      const res = await fetch('http://localhost:4000/generate-quiz', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(request)
-      });
-      const result = await res.json();
+        
+    chrome.runtime.sendMessage({ action: 'generateQuiz' }, (response) => {
+      console.log('Quiz generation response:', response);
+      setIsLoading(false);
       
-      if (!result.success) {
-        if (result.needsApiKey) {
-          setShowApiKeyDialog(true);
-        } else {
-          setExtractionError(result.error);
-        }
-      } else {
-        // show a brief success animation
+      if (response && response.success && response.data?.contentExtracted) {
+        // Get updated article content if it was extracted during quiz generation
+        chrome.runtime.sendMessage({ action: 'getArticleContent' }, (contentResponse) => {
+          if (contentResponse && contentResponse.success) {
+            setArticleContent(contentResponse.data);
+            setExtractionStatus('success');
+
         setShowSuccessFeedback(true);
         setTimeout(() => setShowSuccessFeedback(false), 1500);
       }
-    } catch (e) {
-      console.error('Error generating quiz:', e);
-      setExtractionError('Failed to generate quiz');
-    } finally {
-      setIsLoading(false);
-    }
+              });
+      }
+    });
   };
 
   const renderContentCard = () => {
