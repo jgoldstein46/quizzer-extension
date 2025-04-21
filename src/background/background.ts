@@ -283,6 +283,7 @@ async function handleGenerateQuiz(): Promise<any> {
   }
   
   const result = await getActiveTabId();
+  console.log('Active tab ID:', result);
   if (!result.success) {
     return { success: false, error: result.error };
   }
@@ -291,8 +292,8 @@ async function handleGenerateQuiz(): Promise<any> {
   
   try {
     // Check if we need to extract content first
-    let articleContent: any = null;
-    let contentResult: any = null;
+    let articleContent: any | null = null;
+    let contentResult: any | null = null;
     
     const storageResult = await chrome.storage.local.get(`articleContent.${tabId}`);
     articleContent = storageResult[`articleContent.${tabId}`];
@@ -300,11 +301,14 @@ async function handleGenerateQuiz(): Promise<any> {
     if (!articleContent) {
       // Extract content first
       contentResult = await handleExtractContent();
+      console.log('Content extraction result:', contentResult);
       if (!contentResult.success) {
         return contentResult;
       }
       articleContent = contentResult.data;
     }
+
+    console.log("Extracted article content:", articleContent);
     
     // Get article data
     const articleDataResult = await chrome.storage.local.get(`articleData.${tabId}`);
@@ -313,6 +317,8 @@ async function handleGenerateQuiz(): Promise<any> {
     if (!articleData) {
       return { success: false, error: 'No article data found for this tab' };
     }
+
+    console.log("Article data:", articleData);
     
     // Get settings
     const settingsResult = await chrome.storage.local.get('settings');
@@ -320,15 +326,15 @@ async function handleGenerateQuiz(): Promise<any> {
     
     // Prepare the quiz generation request
     const request: QuizGenerationRequest = {
-      articleContent: articleContent.excerpt,
+      articleContent: articleContent!.excerpt,
       articleTitle: articleData.title,
       articleUrl: articleData.url,
       tabId: tabId,
       questionCount: settings.questionsPerQuiz || 3,
       difficultyLevel: settings.difficultyLevel || 'intermediate',
       articleMetadata: {
-        wordCount: articleContent.wordCount,
-        readTime: articleContent.readTime
+        wordCount: articleContent!.wordCount,
+        readTime: articleContent!.readTime
       }
     };
     
@@ -345,6 +351,7 @@ async function handleGenerateQuiz(): Promise<any> {
           });
         } catch (e) {
           // Port might be closed, ignore the error
+          console.warn('Progress port closed:', e);
         }
       }
     });
@@ -362,6 +369,7 @@ async function handleGenerateQuiz(): Promise<any> {
     
     // Generate the quiz
     const quizResult = await quizController.generateQuiz(request);
+    console.log('Quiz generation result:', quizResult);
     
     if (quizResult.success) {
       return {
@@ -392,7 +400,7 @@ async function handleGenerateQuiz(): Promise<any> {
 }
 
 // Handle retrieving article content for the active tab
-async function handleGetArticleContent(): Promise<any> {
+async function handleGetArticleContent(): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
     // Get active tab
     const result = await getActiveTabId();
