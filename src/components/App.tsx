@@ -1,8 +1,11 @@
+import { Quiz } from '@/services/quiz';
+import { getQuizById, getQuizByTabId } from '@/services/quiz/storage';
 import { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
 import '../App.css';
 import ErrorBoundary from './ErrorBoundary';
 import Onboarding from './Onboarding';
 import UserSettings, { UserPreferences } from './UserSettings';
+import { QuizForm } from './quiz';
 
 function App() {
   const [articleData, setArticleData] = useState<null | {
@@ -25,6 +28,7 @@ function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [, setUserPreferences] = useState<UserPreferences | null>(null);
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
+  const [quiz, setQuiz] = useState<Quiz | null>(null);
   
   const extractButtonRef = useRef<HTMLButtonElement>(null);
   const generateButtonRef = useRef<HTMLButtonElement>(null);
@@ -87,7 +91,7 @@ function App() {
   },
   [showOnboarding, extractionStatus, articleContent, isLoading, showKeyboardShortcuts, showSettings] 
 );
-
+  console.log('App component mounted');
   useEffect(() => {
     // Get current tab to check if we have data for it
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -98,10 +102,12 @@ function App() {
           `articleData.${currentTab.id}`,
           `articleContent.${currentTab.id}`,
           'settings',
+          'quizzes',
           'onboardingComplete'
         ], (result) => {
           const data = result[`articleData.${currentTab.id}`];
           const content = result[`articleContent.${currentTab.id}`];
+          const quizzes = result['quizzes'];
           const prefs = result.settings;
           const onboardingComplete = result.onboardingComplete;
           
@@ -112,6 +118,20 @@ function App() {
           if (content) {
             setArticleContent(content);
             setExtractionStatus('success');
+          }
+
+          if (quizzes) {
+            getQuizByTabId(currentTab.id!).then((storedQuiz) => {
+              if (storedQuiz) {
+                setQuiz({
+                  questions: storedQuiz.questions,
+                  metadata: {
+                    generatedAt: storedQuiz.metadata.generatedAt!,
+                    ...storedQuiz.metadata,
+                  }
+                });
+              }
+            });
           }
           
           if (prefs) {
@@ -167,8 +187,21 @@ function App() {
   const generateQuiz = async () => {
     setIsLoading(true);
         
-    chrome.runtime.sendMessage({ action: 'generateQuiz' }, (response) => {
+    chrome.runtime.sendMessage({ action: 'generateQuiz' }, async (response) => {
       console.log('Quiz generation response:', response);
+      if (response && response.success) {
+        const quizId = response.data?.quizId;
+        const storageQuizResult = await getQuizById(quizId);
+        if (storageQuizResult) {
+          setQuiz({
+            questions: storageQuizResult.questions,
+            metadata: {
+              generatedAt: storageQuizResult.metadata.generatedAt!,
+              ...storageQuizResult.metadata,
+            }
+          });
+        }
+      } 
       setIsLoading(false);
       
       if (response && response.success && response.data?.contentExtracted) {
@@ -364,7 +397,13 @@ function App() {
                 </div>
               )}
               
-              <button
+              {quiz ? 
+                <QuizForm
+                  quiz={quiz}
+                  onSubmit={() => console.log('Quiz submitted')}
+                  />
+                  :
+                <button
                 ref={generateButtonRef}
                 onClick={generateQuiz}
                 disabled={isLoading}
@@ -374,7 +413,7 @@ function App() {
               >
                 Generate Quiz
                 <span className="icon" aria-hidden="true">→</span>
-              </button>
+              </button>}
             </div>
             
             {renderContentCard()}
