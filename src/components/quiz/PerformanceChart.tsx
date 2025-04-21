@@ -17,9 +17,9 @@ const PerformanceChart = ({ evaluations }: PerformanceChartProps) => {
       .filter(key => key !== 'overall');
     
     // Check if we have the same categories across all evaluations
-    const hasConsistentCategories = evaluations.every(eval => {
+    const hasConsistentCategories = evaluations.every(evaluationItem => {
       return allScoreCategories.every(category => 
-        typeof eval.evaluation.scores[category] === 'number'
+        typeof evaluationItem.evaluation.scores[category] === 'number'
       );
     });
     
@@ -32,7 +32,7 @@ const PerformanceChart = ({ evaluations }: PerformanceChartProps) => {
     
     // Calculate average scores per category
     const categoryScores = allScoreCategories.map(category => {
-      const scores = evaluations.map(eval => eval.evaluation.scores[category] || 0);
+      const scores = evaluations.map(evalItem => evalItem.evaluation.scores[category] || 0);
       const average = scores.reduce((sum, score) => sum + score, 0) / scores.length;
       return {
         category: formatCategoryName(category),

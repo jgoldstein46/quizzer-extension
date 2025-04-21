@@ -25,8 +25,8 @@ export const QuizResults = ({
   useEffect(() => {
     // Calculate overall score
     if (evaluations.length > 0) {
-      const totalScore = evaluations.reduce((sum, eval) => {
-        return sum + eval.evaluation.scores.overall;
+      const totalScore = evaluations.reduce((sum, evalItem) => {
+        return sum + evalItem.evaluation.scores.overall;
       }, 0);
       setOverallScore(Math.round((totalScore / evaluations.length) * 10) / 10);
       setCompletedQuestions(evaluations.length);
