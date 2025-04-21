@@ -31,6 +31,7 @@ export interface StoredQuiz {
     articleReadTime?: number;
     quizType?: string;
     [key: string]: any;
+    generatedAt?: string;
   };
 }
 
