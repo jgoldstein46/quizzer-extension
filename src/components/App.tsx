@@ -1,5 +1,5 @@
 import { Quiz } from '@/services/quiz';
-import { getQuizById, getQuizByTabId } from '@/services/quiz/storage';
+import { getQuizByTabId } from '@/services/quiz/storage';
 import { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
 import '../App.css';
 import ErrorBoundary from './ErrorBoundary';
@@ -26,7 +26,7 @@ function App() {
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [, setUserPreferences] = useState<UserPreferences | null>(null);
+  const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   
@@ -91,7 +91,7 @@ function App() {
   },
   [showOnboarding, extractionStatus, articleContent, isLoading, showKeyboardShortcuts, showSettings] 
 );
-  console.log('App component mounted');
+  
   useEffect(() => {
     // Get current tab to check if we have data for it
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -185,38 +185,51 @@ function App() {
   };
 
   const generateQuiz = async () => {
-    setIsLoading(true);
-        
-    chrome.runtime.sendMessage({ action: 'generateQuiz' }, async (response) => {
-      console.log('Quiz generation response:', response);
-      if (response && response.success) {
-        const quizId = response.data?.quizId;
-        const storageQuizResult = await getQuizById(quizId);
-        if (storageQuizResult) {
-          setQuiz({
-            questions: storageQuizResult.questions,
-            metadata: {
-              generatedAt: storageQuizResult.metadata.generatedAt!,
-              ...storageQuizResult.metadata,
-            }
-          });
-        }
-      } 
-      setIsLoading(false);
-      
-      if (response && response.success && response.data?.contentExtracted) {
-        // Get updated article content if it was extracted during quiz generation
-        chrome.runtime.sendMessage({ action: 'getArticleContent' }, (contentResponse) => {
-          if (contentResponse && contentResponse.success) {
-            setArticleContent(contentResponse.data);
-            setExtractionStatus('success');
-
+  setIsLoading(true);
+    console.log('Generating quiz, about to fetch settings');
+    // Fetch latest user preferences from storage
+    console.log('Got user preferences: ', userPreferences)
+    
+      if (!articleContent || !articleData) {
+        setExtractionStatus('error');
+        setIsLoading(false);
+        return;
+      }
+      console.log('Generating quiz, settings fetched, about to call server...');
+      // POST to local server endpoint for quiz generation
+      const res = await fetch('http://localhost:3000/generate-quiz', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          articleContent: articleContent.excerpt || '',
+          articleTitle: articleData.title,
+          articleUrl: articleData.url,
+          settings: {
+            questionsPerQuiz: 5,
+            difficultyLevel: 'medium', // fallback if not present
+          },
+          articleMetadata: {
+            byline: articleContent.byline,
+            wordCount: articleContent.wordCount,
+            readTime: articleContent.readTime,
+          },
+        }),
+      });
+      const data = await res.json();
+      console.log('Quiz generation response:', data);
+      if (data && data.quiz) {
+        console.log('Quiz generated successfully');
+        setQuiz(data.quiz);
+        setExtractionStatus('success');
         setShowSuccessFeedback(true);
         setTimeout(() => setShowSuccessFeedback(false), 1500);
+      } else {
+        console.log('Failed to generate quiz');
+        setExtractionStatus('error');
       }
-              });
-      }
-    });
+      setIsLoading(false);
   };
 
   const renderContentCard = () => {

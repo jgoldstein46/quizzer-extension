@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "server": "tsx server/index.ts",
     "dev": "vite",
     "build": "node scripts/build-extension.js",
     "build:watch": "tsc -p tsconfig.background.json --watch",
@@ -24,7 +25,7 @@
     "cli-table3": "^0.6.5",
     "commander": "^11.1.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
+    "dotenv": "^16.5.0",
     "express": "^4.21.2",
     "fastmcp": "^1.20.5",
     "figlet": "^1.8.0",
@@ -43,6 +44,7 @@
   "devDependencies": {
     "@eslint/js": "^9.22.0",
     "@types/chrome": "^0.0.315",
+    "@types/express": "^5.0.1",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
@@ -51,6 +53,8 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.3",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.26.1",
     "vite": "^6.3.1"

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Quiz } from '../../services/quiz/parser';
+import QuizQuestion from './QuizQuestion';
 
 interface UserAnswer {
   questionId: number;
