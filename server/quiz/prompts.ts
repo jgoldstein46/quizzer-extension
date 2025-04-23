@@ -214,7 +214,7 @@ function getFormatInstructions(format: 'json' | 'markdown' | 'structured', inclu
       "type": "multiple_choice", // or other question type
       "text": "Question text goes here?",
       "options": ["Option A", "Option B", "Option C", "Option D"], // for multiple choice questions
-      "correctAnswer": "Option A", // or index (0-3) for multiple choice
+      "correctAnswer": "index (0-3) for multiple choice",
       ${includeExplanations ? `"explanation": "Explanation of the correct answer..."` : ''}
     },
     // more questions...
