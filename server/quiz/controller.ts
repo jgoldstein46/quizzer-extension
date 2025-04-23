@@ -6,7 +6,7 @@
 import { QuizGenerationService, QuizType } from './api';
 import { parseQuizResponse, Quiz } from './parser';
 import { preprocessContent, PreprocessingOptions } from './preprocessor';
-import { QuizPromptOptions } from './prompts';
+import { QuestionType, QuizPromptOptions } from './prompts';
 import * as QuizStorage from './storage';
 
 /**
@@ -19,6 +19,7 @@ export interface QuizGenerationRequest {
   tabId?: number;
   quizType?: QuizType;
   questionCount?: number;
+  questionTypes?: string[];
   difficultyLevel?: 'basic' | 'intermediate' | 'advanced';
   articleMetadata?: {
     wordCount?: number;
@@ -154,6 +155,7 @@ export class QuizController {
       const quizType = request.quizType || 'factual';
       const questionCount = request.questionCount || 3;
       const difficultyLevel = request.difficultyLevel || 'intermediate';
+      const questionTypes = request.questionTypes || ['multiple_choice'];
       
       // Process content
       const preprocessOptions: PreprocessingOptions = {
@@ -170,7 +172,7 @@ export class QuizController {
       const promptOptions: QuizPromptOptions = {
         numberOfQuestions: questionCount,
         difficultyLevel: difficultyLevel,
-        questionTypes: ['multiple_choice', 'open_ended'],
+        questionTypes: questionTypes as QuestionType[],
         cognitiveSkills: ['comprehension', 'analysis', 'application'],
         includeExplanations: true,
         format: 'json'
