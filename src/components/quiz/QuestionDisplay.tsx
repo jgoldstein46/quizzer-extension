@@ -51,23 +51,7 @@ const QuestionDisplay = ({
         {question.text}
       </div>
       
-      {question.type === 'multiple_choice' && question.options && (
-        <div className="options-list space-y-2">
-          {question.options.map((option, index) => (
-            <div 
-              key={index} 
-              className="option p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition cursor-pointer"
-            >
-              <div className="flex items-start">
-                <div className="option-letter h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center mr-3 text-gray-600 font-medium flex-shrink-0">
-                  {String.fromCharCode(65 + index)}
-                </div>
-                <div className="option-text text-gray-700">{option}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+
       
       {isLoading && (
         <div className="loading-indicator flex justify-center py-4">
