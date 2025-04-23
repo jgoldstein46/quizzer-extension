@@ -188,7 +188,6 @@ function App() {
   const generateQuiz = async () => {
   setIsLoading(true);
     console.log('Generating quiz, about to fetch settings');
-    // Fetch latest user preferences from storage
     console.log('Got user preferences: ', userPreferences)
     
       if (!articleContent || !articleData) {
@@ -196,7 +195,6 @@ function App() {
         setIsLoading(false);
         return;
       }
-      console.log('Generating quiz, settings fetched, about to call server...');
       // POST to local server endpoint for quiz generation
       const res = await fetch('http://localhost:3000/generate-quiz', {
         method: 'POST',
@@ -425,8 +423,17 @@ function App() {
                 aria-label="Generate quiz from article"
                 title="Generate quiz (Press G)"
               >
-                Generate Quiz
-                <span className="icon" aria-hidden="true">→</span>
+                {isLoading ? (
+                  <>
+                    <span className="spinner h-4 w-4 mr-2" aria-hidden="true"></span>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    Generate Quiz
+                    <span className="icon" aria-hidden="true">→</span>
+                  </>
+                )}
               </button>}
             </div>
             
