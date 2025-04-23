@@ -163,7 +163,7 @@ function App() {
     return () => {
       window.removeEventListener('keydown', handleGlobalKeyDownEvent);
     };
-  }, [handleGlobalKeyDown]);
+  }, []);
 
   
 
@@ -188,15 +188,17 @@ function App() {
   };
 
   const generateQuiz = async () => {
-  setIsLoading(true);
-    console.log('Generating quiz, about to fetch settings');
-    console.log('Got user preferences: ', userPreferences)
+  
     
       if (!articleContent || !articleData) {
         setExtractionStatus('error');
         setIsLoading(false);
         return;
       }
+      console.log("Setting loading to true");
+      setIsLoading(true);
+      console.log('Generating quiz, about to fetch settings');
+      console.log('Got user preferences: ', userPreferences)
       // POST to local server endpoint for quiz generation
       const res = await fetch('http://localhost:3000/generate-quiz', {
         method: 'POST',
@@ -426,12 +428,12 @@ function App() {
   </div>
 <h3 id="how-to-use" className="font-medium mb-2">How to use Quizzer:</h3>
           <ol className="list-decimal list-inside text-sm space-y-1">
-            <li className="transition-transform hover:translate-x-1">Navigate to an article you want to quiz yourself on</li>
-            <li className="transition-transform hover:translate-x-1">Open this sidebar by clicking the Quizzer icon</li>
-            <li className="transition-transform hover:translate-x-1">Extract the article content</li>
-            <li className="transition-transform hover:translate-x-1">Click "Generate Quiz" to create questions</li>
-            <li className="transition-transform hover:translate-x-1">Answer the questions to test your comprehension</li>
-            <li className="transition-transform hover:translate-x-1">Review your performance with AI-powered feedback</li>
+            <li>Navigate to an article you want to quiz yourself on</li>
+            <li>Open this sidebar by clicking the Quizzer icon</li>
+            <li>Extract the article content</li>
+            <li>Click "Generate Quiz" to create questions</li>
+            <li>Answer the questions to test your comprehension</li>
+            <li>Review your performance with AI-powered feedback</li>
           </ol>
         </div>
       </div>
