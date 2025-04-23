@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Quiz } from '../../services/quiz/parser';
 import QuizQuestion from './QuizQuestion';
+import { Button } from '../ui/button';
 
 interface UserAnswer {
   questionId: number;
@@ -18,8 +19,30 @@ const QuizForm = ({ quiz, onSubmit, isSubmitting = false }: QuizFormProps) => {
   const [answers, setAnswers] = useState<UserAnswer[]>([]);
   const [validationErrors, setValidationErrors] = useState<{ [key: number]: string }>({});
   const [showConfirmation, setShowConfirmation] = useState(false);
+  // Duolingo-style state for MCQ grading
+  const [isGraded, setIsGraded] = useState(false);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
   useEffect(() => {
+    // Reset grading state when question changes
+    setIsGraded(false);
+    setIsCorrect(null);
+  }, [currentQuestionIndex]);
+
+  useEffect(() => {
+    console.log("In QuizForm, got quiz:", quiz);
+    // Initialize answers array with empty answers for each question
+    if (quiz && quiz.questions) {
+      const initialAnswers = quiz.questions.map(q => ({
+        questionId: q.id,
+        answer: ''
+      }));
+      setAnswers(initialAnswers);
+    }
+  }, [quiz]);
+
+  useEffect(() => {
+    console.log("In QuizForm, got quiz:", quiz);
     // Initialize answers array with empty answers for each question
     if (quiz && quiz.questions) {
       const initialAnswers = quiz.questions.map(q => ({
@@ -80,10 +103,32 @@ const QuizForm = ({ quiz, onSubmit, isSubmitting = false }: QuizFormProps) => {
     }
   };
 
-  const goToNextQuestion = () => {
-    if (validateCurrentQuestion()) {
-      if (currentQuestionIndex < totalQuestions - 1) {
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
+  // For MCQ: grade or advance
+  const handleContinue = () => {
+    if (currentQuestion.type === 'multiple_choice') {
+      if (!isGraded) {
+        // Grade the answer
+        const currentAnswer = answers.find(a => a.questionId === currentQuestion.id)?.answer;
+        // correctAnswer is index (0-3) for multiple choice
+        const correctIndex = typeof currentQuestion.correctAnswer === 'number' ? currentQuestion.correctAnswer : parseInt(currentQuestion.correctAnswer);
+        const selectedIndex = Array.isArray(currentQuestion.options)
+          ? currentQuestion.options.findIndex(opt => opt === currentAnswer)
+          : -1;
+        const correct = selectedIndex === correctIndex;
+        setIsCorrect(correct);
+        setIsGraded(true);
+      } else {
+        // Advance to next question
+        if (currentQuestionIndex < totalQuestions - 1) {
+          setCurrentQuestionIndex(currentQuestionIndex + 1);
+        }
+      }
+    } else {
+      // Default: validate and advance
+      if (validateCurrentQuestion()) {
+        if (currentQuestionIndex < totalQuestions - 1) {
+          setCurrentQuestionIndex(currentQuestionIndex + 1);
+        }
       }
     }
   };
@@ -135,43 +180,52 @@ const QuizForm = ({ quiz, onSubmit, isSubmitting = false }: QuizFormProps) => {
             </div>
           )}
           
-          <div className="quiz-navigation flex justify-between mt-6">
-            <button
-              type="button"
-              onClick={goToPreviousQuestion}
-              disabled={currentQuestionIndex === 0 || isSubmitting}
-              className="px-4 py-2 bg-gray-100 text-gray-800 rounded hover:bg-gray-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Previous
-            </button>
-            
-            {currentQuestionIndex < totalQuestions - 1 ? (
-              <button
+          <div className="quiz-navigation flex flex-col gap-3 mt-6">
+            {currentQuestion.type === 'multiple_choice' ? (
+              <Button
                 type="button"
-                onClick={goToNextQuestion}
-                disabled={isSubmitting}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleContinue}
+                disabled={isSubmitting || !getCurrentAnswerForQuestion(currentQuestion.id)}
+                className="w-full shadow-lg py-3 text-base font-semibold"
               >
-                Next
-              </button>
+                {isGraded ? (currentQuestionIndex < totalQuestions - 1 ? 'Continue' : 'Finish Quiz') : 'Continue'}
+              </Button>
             ) : (
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent mr-2"></div>
-                    <span>Submitting...</span>
-                  </div>
-                ) : (
-                  'Submit Answers'
-                )}
-              </button>
+              currentQuestionIndex < totalQuestions - 1 ? (
+                <Button
+                  type="button"
+                  onClick={handleContinue}
+                  disabled={isSubmitting}
+                  className="w-full shadow-lg py-3 text-base font-semibold"
+                >
+                  Next
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="w-full shadow-lg py-3 text-base font-semibold"
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent mr-2"></div>
+                      <span>Submitting...</span>
+                    </div>
+                  ) : (
+                    'Submit Answers'
+                  )}
+                </Button>
+              )
             )}
           </div>
+
+          {/* Feedback for MCQ */}
+          {currentQuestion.type === 'multiple_choice' && isGraded && (
+            <div className={`mt-4 p-4 rounded-lg text-center font-semibold ${isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+              {isCorrect ? 'Correct! 🎉' : `❌ The correct answer is: ${Array.isArray(currentQuestion.options) ? currentQuestion.options[typeof currentQuestion.correctAnswer === 'number' ? currentQuestion.correctAnswer : parseInt(currentQuestion.correctAnswer)] : ''}`}
+            </div>
+          )}
           
           <div className="quiz-progress mt-6">
             <div className="flex justify-between text-sm text-gray-500 mb-1">
@@ -194,18 +248,18 @@ const QuizForm = ({ quiz, onSubmit, isSubmitting = false }: QuizFormProps) => {
                   Some questions are still unanswered. Are you sure you want to submit your quiz?
                 </p>
                 <div className="flex space-x-3">
-                  <button
+                  <Button
                     onClick={cancelSubmit}
                     className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={confirmSubmit}
                     className="flex-1 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
                   >
                     Submit Anyway
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
