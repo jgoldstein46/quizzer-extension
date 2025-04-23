@@ -4,7 +4,7 @@ import { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useRef, us
 import '../App.css';
 import ErrorBoundary from './ErrorBoundary';
 import Onboarding from './Onboarding';
-import UserSettings, { UserPreferences } from './UserSettings';
+import { UserPreferences } from './UserSettings';
 import { QuizForm } from './quiz';
 
 function App() {
@@ -25,7 +25,7 @@ function App() {
   const [extractionError, setExtractionError] = useState<string | null>(null);
   const [showSuccessFeedback, setShowSuccessFeedback] = useState(false);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
+  
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
@@ -34,7 +34,7 @@ function App() {
   const extractButtonRef = useRef<HTMLButtonElement>(null);
   const generateButtonRef = useRef<HTMLButtonElement>(null);
   const helpButtonRef = useRef<HTMLButtonElement>(null);
-  const settingsButtonRef = useRef<HTMLButtonElement>(null);
+  
 
   const handleGlobalKeyDown = useCallback((e: ReactKeyboardEvent<HTMLDivElement> | globalThis.KeyboardEvent) => {
     // Check if not inside an input field
@@ -64,13 +64,7 @@ function App() {
           e.preventDefault();
         }
         break;
-      case 's':
-        // Toggle settings
-        if (settingsButtonRef.current) {
-          settingsButtonRef.current.click();
-          e.preventDefault();
-        }
-        break;
+      
       case '?':
         // Toggle keyboard shortcuts help
         setShowKeyboardShortcuts(prev => !prev);
@@ -81,10 +75,7 @@ function App() {
         if (showKeyboardShortcuts) {
           setShowKeyboardShortcuts(false);
           e.preventDefault();
-        } else if (showSettings) {
-          setShowSettings(false);
-          e.preventDefault();
-        }
+        } 
         break;
       default:
         break;
@@ -328,16 +319,7 @@ function App() {
         <div className="flex justify-between items-center">
           <h1 className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>Quizzer</h1>
           <div className="flex space-x-2">
-            <button 
-              ref={settingsButtonRef}
-              onClick={() => setShowSettings(true)} 
-              className="btn text-sm"
-              style={{ color: 'var(--color-neutral-500)' }}
-              aria-label="Open user settings"
-              title="Settings (Press S)"
-            >
-              ⚙️
-            </button>
+            
             <button 
               ref={helpButtonRef}
               onClick={() => setShowKeyboardShortcuts(true)} 
@@ -483,7 +465,7 @@ function App() {
       </footer>
       
       {renderKeyboardShortcutsHelp()}
-      <UserSettings isOpen={showSettings} onClose={() => setShowSettings(false)} />
+      
       <Onboarding 
         isOpen={showOnboarding} 
         onClose={() => setShowOnboarding(false)}

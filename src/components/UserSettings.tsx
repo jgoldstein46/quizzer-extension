@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import '../App.css';
 
 export interface UserPreferences {
-  theme: 'light' | 'dark' | 'system';
+  
   fontSize: 'small' | 'medium' | 'large';
   reduceMotion: boolean;
   highContrast: boolean;
@@ -13,7 +13,7 @@ export interface UserPreferences {
 }
 
 const defaultPreferences: UserPreferences = {
-  theme: 'system',
+  
   fontSize: 'medium',
   reduceMotion: false,
   highContrast: false,
@@ -48,16 +48,6 @@ function UserSettings({ isOpen, onClose }: UserSettingsProps) {
       onClose();
     });
     
-    // Apply theme
-    if (newPrefs.theme === 'dark') {
-      document.documentElement.classList.add('dark-theme');
-      document.documentElement.classList.remove('light-theme');
-    } else if (newPrefs.theme === 'light') {
-      document.documentElement.classList.add('light-theme');
-      document.documentElement.classList.remove('dark-theme');
-    } else {
-      document.documentElement.classList.remove('light-theme', 'dark-theme');
-    }
     
     // Apply font size
     document.documentElement.classList.remove('text-small', 'text-medium', 'text-large');
@@ -119,24 +109,6 @@ function UserSettings({ isOpen, onClose }: UserSettingsProps) {
         </div>
         
         <div className="space-y-6">
-          {/* Theme Selection */}
-          <div className="space-y-2">
-            <label className="font-medium block" htmlFor="theme-select">Theme</label>
-            <select 
-              id="theme-select"
-              className="input w-full"
-              value={preferences.theme}
-              onChange={(e) => handleChange('theme', e.target.value)}
-            >
-              <option value="system">System Default</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
-            <p className="text-xs" style={{ color: 'var(--color-neutral-500)' }}>
-              Choose your preferred color scheme
-            </p>
-          </div>
-          
           {/* Font Size */}
           <div className="space-y-2">
             <label className="font-medium block" htmlFor="font-size-select">Font Size</label>
