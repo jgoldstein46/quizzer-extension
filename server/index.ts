@@ -1,7 +1,5 @@
 import 'dotenv/config';
-import express, { Express, NextFunction } from "express";
-import { createServer, type Server } from "http";
-import { serveStatic, setupVite } from "./vite";
+import express from "express";
 
 const app = express();
 
@@ -40,61 +38,9 @@ app.post("/generate-quiz", async (req, res) => {
   }
 });
 
-const registerRoutes = (app: Express): Server => {
-  // Error handling middleware for JSON parsing errors
-  app.use((err: any, req: Express.Request, res: any, next: any) => {
-    if (err instanceof SyntaxError && "body" in err) {
-      return res.status(400).json({ error: "Invalid JSON" });
-    }
-    next(err);
-  });
-  const server = createServer(app);
-  return server;
-};
+app.listen(3000, () => {
+  console.log('Server running on port 3000');
+});
 
 
-(async () => {
-  const server = registerRoutes(app);
 
-  app.use((err: any, _req: Express.Request, res: Express.Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
-
-  const port = (process.env.PORT as unknown as number) || 3000;
-
-  const startServer = async (initialPort: number) => {
-    let currentPort = initialPort;
-    let serverStarted = false;
-    
-    while (!serverStarted) {
-      try {
-        await server.listen(currentPort);
-        console.log(`Server running on port ${currentPort}`);
-        serverStarted = true;
-      } catch (err) {
-        if ((err as any).code === 'EADDRINUSE') {
-          console.log(`Port ${currentPort} in use, trying ${currentPort + 1}`);
-          currentPort += 1;
-        } else {
-          console.error('Server failed to start:', err);
-          throw err;
-        }
-      }
-    }
-  }
-
-  startServer(port).catch(console.error);
-})();
