@@ -59,6 +59,7 @@ const QuizForm = ({ quiz, onSubmit, isSubmitting = false }: QuizFormProps) => {
     setAnswers(quiz.questions.map(q => ({ questionId: q.id, answer: '' })));
     setValidationErrors({});
     setShowConfirmation(false);
+    setQuizFinished(false);
     setIsGraded(false);
     setIsCorrect(null);
     setSubmitted(false);
