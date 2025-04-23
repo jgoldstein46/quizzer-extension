@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "server": "tsx server/index.ts",
-    "dev": "vite",
+    "dev": "tsx server/index.ts",
     "build": "node scripts/build-extension.js",
     "build:watch": "tsc -p tsconfig.background.json --watch",
     "copy-extension-files": "cp public/manifest.json dist/ && cp -r public/icons dist/ && cp public/background.js dist/",
