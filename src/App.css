@@ -420,76 +420,6 @@ html, body, #root {
   transition: opacity var(--transition-normal), transform var(--transition-normal);
 }
 
-/* High Contrast Mode */
-@media (prefers-contrast: more) {
-  :root {
-    --color-primary: #0047ab; /* Darker blue for higher contrast */
-    --color-primary-dark: #00308f;
-    --color-neutral-500: #444444; /* Darker gray for text */
-    --color-neutral-600: #333333;
-    --color-neutral-700: #222222;
-    --color-success: #006400; /* Dark green */
-    --color-warning: #b35c00; /* Dark orange */
-    --color-error: #a30000; /* Dark red */
-    
-    /* Increase contrast for interactive elements */
-    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
-  }
-  
-  /* Enhanced focus states for high contrast mode */
-  .btn:focus-visible,
-  .interactive-element:focus-visible,
-  a:focus-visible,
-  input:focus-visible,
-  select:focus-visible,
-  textarea:focus-visible {
-    outline: 3px solid #ffffff;
-    outline-offset: 2px;
-    box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.75);
-  }
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-neutral-50: #111827;
-    --color-neutral-100: #1f2937;
-    --color-neutral-200: #374151;
-    --color-neutral-300: #4b5563;
-    --color-neutral-400: #6b7280;
-    --color-neutral-500: #9ca3af;
-    --color-neutral-600: #d1d5db;
-    --color-neutral-700: #e5e7eb;
-    --color-neutral-800: #f3f4f6;
-    --color-neutral-900: #f9fafb;
-    
-    --color-primary: #60a5fa; /* blue-400 - brighter for dark mode */
-    --color-primary-dark: #3b82f6; /* blue-500 */
-    --color-primary-light: #93c5fd; /* blue-300 */
-    --color-primary-bg: #1e3a8a; /* blue-900 */
-    
-    --color-success: #34d399; /* emerald-400 - brighter for dark mode */
-    --color-success-light: #064e3b; /* emerald-900 */
-    --color-warning: #fbbf24; /* amber-400 - brighter for dark mode */
-    --color-warning-light: #78350f; /* amber-900 */
-    --color-error: #f87171; /* red-400 - brighter for dark mode */
-    --color-error-light: #7f1d1d; /* red-900 */
-  }
-  
-  .sidebar-container {
-    background-color: var(--color-neutral-50);
-    color: var(--color-neutral-900);
-  }
-  
-  /* Enhanced focus visibility for dark mode */
-  :focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
-}
-
 /* Reduced motion accessibility */
 @media (prefers-reduced-motion: reduce) {
   * {
@@ -580,48 +510,6 @@ textarea:focus {
 }
 
 /* Theme override classes */
-.light-theme {
-  --color-neutral-50: #f9fafb;
-  --color-neutral-100: #f3f4f6;
-  --color-neutral-200: #e5e7eb;
-  --color-neutral-300: #d1d5db;
-  --color-neutral-400: #9ca3af;
-  --color-neutral-500: #6b7280;
-  --color-neutral-600: #4b5563;
-  --color-neutral-700: #374151;
-  --color-neutral-800: #1f2937;
-  --color-neutral-900: #111827;
-  
-  --color-primary: #2563eb;
-  --color-primary-dark: #1d4ed8;
-  --color-primary-light: #93c5fd;
-  --color-primary-bg: #eff6ff;
-}
-
-.dark-theme {
-  --color-neutral-50: #111827;
-  --color-neutral-100: #1f2937;
-  --color-neutral-200: #374151;
-  --color-neutral-300: #4b5563;
-  --color-neutral-400: #6b7280;
-  --color-neutral-500: #9ca3af;
-  --color-neutral-600: #d1d5db;
-  --color-neutral-700: #e5e7eb;
-  --color-neutral-800: #f3f4f6;
-  --color-neutral-900: #f9fafb;
-  
-  --color-primary: #60a5fa;
-  --color-primary-dark: #3b82f6;
-  --color-primary-light: #93c5fd;
-  --color-primary-bg: #1e3a8a;
-  
-  --color-success: #34d399;
-  --color-success-light: #064e3b;
-  --color-warning: #fbbf24;
-  --color-warning-light: #78350f;
-  --color-error: #f87171;
-  --color-error-light: #7f1d1d;
-}
 
 /* High contrast override */
 .high-contrast {
