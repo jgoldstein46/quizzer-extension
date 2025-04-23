@@ -2,6 +2,7 @@ import { Quiz } from '@/services/quiz';
 import { getQuizByTabId } from '@/services/quiz/storage';
 import { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
 import '../App.css';
+import quizzerLogo from '../assets/quizzer-logo.png';
 import ErrorBoundary from './ErrorBoundary';
 import Onboarding from './Onboarding';
 import { UserPreferences } from './UserSettings';
@@ -208,7 +209,9 @@ function App() {
           articleUrl: articleData.url,
           settings: {
             questionsPerQuiz: 5,
-            difficultyLevel: 'medium', // fallback if not present
+            difficultyLevel: 'medium',
+            quizType: 'factual',
+            questionTypes: ['multiple_choice'],
           },
           articleMetadata: {
             byline: articleContent.byline,
@@ -263,6 +266,7 @@ function App() {
         variant="outline"
         size="sm"
         ref={helpButtonRef}
+        className="fixed top-6 right-6 z-50 shadow-md text-white"
         aria-label="Show keyboard shortcuts help"
         onClick={() => setHelpDialogOpen(true)}
       >
@@ -291,16 +295,6 @@ function App() {
     setShowOnboarding(false);
   };
 
-  const ApiKeyDialog = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-    return isOpen ? (
-      <div className="api-key-dialog">
-        <h3>API Key Required</h3>
-        <p>You need to add your Anthropic API key to use this feature.</p>
-        <button onClick={onClose}>Cancel</button>
-      </div>
-    ) : null;
-  };
-
   const appContent = (
     <div 
       className="sidebar-container p-4 h-full flex flex-col" 
@@ -312,11 +306,9 @@ function App() {
       <a href="#main-content" className="skip-link">Skip to main content</a>
       
       <header className="mb-4 animate-fade-in" role="banner">
-        <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>Quizzer</h1>
-          <div className="flex space-x-2">
-            {renderKeyboardShortcutsHelp()}
-          </div>
+        <div className="flex justify-start items-center">
+        <img src={quizzerLogo} alt="Quizzer logo" style={{ width: 28, height: 28, borderRadius: '50%', marginRight: 8, objectFit: 'cover', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }} />
+  <span className="font-bold text-xl" style={{ letterSpacing: '-0.5px', color: 'var(--color-primary-dark)' }}>Quizzer</span>
         </div>
         <p className="text-sm" style={{ color: 'var(--color-neutral-600)' }}>Generate quizzes from any article</p>
       </header>
@@ -430,7 +422,9 @@ function App() {
           role="region"
           aria-labelledby="how-to-use"
         >
-          <h3 id="how-to-use" className="font-medium mb-2">How to use Quizzer:</h3>
+          <div className="flex items-center mb-4">
+  </div>
+<h3 id="how-to-use" className="font-medium mb-2">How to use Quizzer:</h3>
           <ol className="list-decimal list-inside text-sm space-y-1">
             <li className="transition-transform hover:translate-x-1">Navigate to an article you want to quiz yourself on</li>
             <li className="transition-transform hover:translate-x-1">Open this sidebar by clicking the Quizzer icon</li>
@@ -441,6 +435,7 @@ function App() {
           </ol>
         </div>
       </div>
+      {renderKeyboardShortcutsHelp()}
       
       <footer 
         className="mt-auto pt-2 border-t animate-fade-in" 
@@ -455,7 +450,6 @@ function App() {
         onClose={() => setShowOnboarding(false)}
         onComplete={handleOnboardingComplete} 
       />
-      <ApiKeyDialog isOpen={showApiKeyDialog} onClose={() => setShowApiKeyDialog(false)} />
     </div>
   );
 

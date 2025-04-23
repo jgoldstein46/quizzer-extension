@@ -6,9 +6,9 @@
 "action": {
 "default_title": "Open Quizzer Sidebar",
 "default_icon": {
-"16": "icons/icon16.png",
-"48": "icons/icon48.png",
-"128": "icons/icon128.png"
+  "16": "icons/quizzer-logo.png",
+  "48": "icons/quizzer-logo.png",
+  "128": "icons/quizzer-logo.png"
 }
 },
 "permissions": ["tabs", "sidePanel", "storage", "activeTab", "scripting"],
