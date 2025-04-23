@@ -16,6 +16,7 @@ function App() {
     title: string;
     byline: string;
     excerpt: string;
+    textContent: string;
     wordCount: number;
     readTime: number;
   }>(null);
@@ -203,7 +204,7 @@ function App() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          articleContent: articleContent.excerpt || '',
+          articleContent: articleContent.textContent || '',
           articleTitle: articleData.title,
           articleUrl: articleData.url,
           settings: {
