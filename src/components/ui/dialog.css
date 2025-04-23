@@ -1,0 +1,46 @@
+.dialog-content {
+  background: var(--color-bg, #fff);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  padding: 2rem;
+  max-width: 28rem;
+  width: 100%;
+  margin: 0 auto;
+}
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+.dialog-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-primary, #1a202c);
+}
+.dialog-close {
+  background: none;
+  border: none;
+  color: var(--color-neutral-500, #6b7280);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.dialog-close:hover {
+  color: var(--color-primary, #1a202c);
+}
+.dialog-shortcuts-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1.5rem;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+.dialog-shortcut-key {
+  color: var(--color-neutral-700, #374151);
+  font-weight: 500;
+}
+.dialog-description {
+  color: var(--color-neutral-500, #6b7280);
+  font-size: 0.875rem;
+}

@@ -6,6 +6,15 @@ import ErrorBoundary from './ErrorBoundary';
 import Onboarding from './Onboarding';
 import { UserPreferences } from './UserSettings';
 import { QuizForm } from './quiz';
+import { Button } from './ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
+} from './ui/dialog';
+import './ui/dialog.css';
 
 function App() {
   const [articleData, setArticleData] = useState<null | {
@@ -25,6 +34,7 @@ function App() {
   const [extractionError, setExtractionError] = useState<string | null>(null);
   const [showSuccessFeedback, setShowSuccessFeedback] = useState(false);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [helpDialogOpen, setHelpDialogOpen] = useState(false);
   
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
@@ -81,7 +91,7 @@ function App() {
         break;
     }
   },
-  [showOnboarding, extractionStatus, articleContent, isLoading, showKeyboardShortcuts, showSettings] 
+  [showOnboarding, extractionStatus, articleContent, isLoading, showKeyboardShortcuts] 
 );
   
   useEffect(() => {
@@ -246,50 +256,36 @@ function App() {
     );
   };
 
-  const renderKeyboardShortcutsHelp = () => {
-    if (!showKeyboardShortcuts) return null;
-    
-    return (
-      <div 
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in"
-        role="dialog"
-        aria-labelledby="keyboard-shortcuts-title"
-        aria-modal="true"
-        onClick={() => setShowKeyboardShortcuts(false)}
+  // Help Button + Dialog using shadcn/ui
+  const renderKeyboardShortcutsHelp = () => (
+    <Dialog open={helpDialogOpen} onOpenChange={setHelpDialogOpen}>
+      <Button
+        variant="outline"
+        size="sm"
+        ref={helpButtonRef}
+        aria-label="Show keyboard shortcuts help"
+        onClick={() => setHelpDialogOpen(true)}
       >
-        <div className="card p-4 m-4 max-w-md w-full animate-slide-in" onClick={e => e.stopPropagation()}>
-          <div className="flex justify-between items-center mb-4">
-            <h3 id="keyboard-shortcuts-title" className="font-medium" style={{ color: 'var(--color-primary)' }}>Keyboard Shortcuts</h3>
-            <button 
-              className="btn text-sm"
-              style={{ color: 'var(--color-neutral-500)' }}
-              onClick={() => setShowKeyboardShortcuts(false)}
-              aria-label="Close keyboard shortcuts help"
-            >
-              ✕
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-sm mb-4">
-            <div style={{ color: 'var(--color-neutral-700)' }}>E</div>
-            <div>Extract content</div>
-            <div style={{ color: 'var(--color-neutral-700)' }}>G</div>
-            <div>Generate quiz</div>
-            <div style={{ color: 'var(--color-neutral-700)' }}>S</div>
-            <div>Open settings</div>
-            <div style={{ color: 'var(--color-neutral-700)' }}>?</div>
-            <div>Show/hide this help</div>
-            <div style={{ color: 'var(--color-neutral-700)' }}>ESC</div>
-            <div>Close any dialog</div>
-            <div style={{ color: 'var(--color-neutral-700)' }}>TAB</div>
-            <div>Navigate between elements</div>
-          </div>
-          <p className="text-xs" style={{ color: 'var(--color-neutral-500)' }}>
-            Press TAB to navigate and ENTER to activate buttons or controls.
-          </p>
+        Help
+      </Button>
+      <DialogContent className="dialog-content">
+        <DialogHeader className="dialog-header">
+          <DialogTitle className="dialog-title" id="keyboard-shortcuts-title">Keyboard Shortcuts</DialogTitle>
+        </DialogHeader>
+        <div className="dialog-shortcuts-grid">
+          <span className="dialog-shortcut-key">E</span><span>Extract content</span>
+          <span className="dialog-shortcut-key">G</span><span>Generate quiz</span>
+          <span className="dialog-shortcut-key">S</span><span>Open settings</span>
+          <span className="dialog-shortcut-key">?</span><span>Show/hide this help</span>
+          <span className="dialog-shortcut-key">ESC</span><span>Close any dialog</span>
+          <span className="dialog-shortcut-key">TAB</span><span>Navigate between elements</span>
         </div>
-      </div>
-    );
-  };
+        <DialogDescription className="dialog-description">
+          Press <b>TAB</b> to navigate and <b>ENTER</b> to activate buttons or controls.
+        </DialogDescription>
+      </DialogContent>
+    </Dialog>
+  );
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
@@ -319,17 +315,7 @@ function App() {
         <div className="flex justify-between items-center">
           <h1 className="text-xl font-bold" style={{ color: 'var(--color-primary)' }}>Quizzer</h1>
           <div className="flex space-x-2">
-            
-            <button 
-              ref={helpButtonRef}
-              onClick={() => setShowKeyboardShortcuts(true)} 
-              className="btn text-sm"
-              style={{ color: 'var(--color-neutral-500)' }}
-              aria-label="Show keyboard shortcuts"
-              title="Keyboard shortcuts (Press ?)"
-            >
-              ?
-            </button>
+            {renderKeyboardShortcutsHelp()}
           </div>
         </div>
         <p className="text-sm" style={{ color: 'var(--color-neutral-600)' }}>Generate quizzes from any article</p>
@@ -463,8 +449,6 @@ function App() {
       >
         Quizzer v1.0 - Powered by Claude
       </footer>
-      
-      {renderKeyboardShortcutsHelp()}
       
       <Onboarding 
         isOpen={showOnboarding} 
