@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { StoredEvaluation } from '../../services/evaluation/storage';
-import { Quiz } from '../../services/quiz/parser';
+import { Quiz } from '@shared/schema';
 import { UserAnswer } from './index';
 import QuestionFeedback from './QuestionFeedback';
 import QuizResults from './QuizResults';

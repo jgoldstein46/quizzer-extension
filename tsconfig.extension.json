@@ -14,7 +14,8 @@
     "noEmit": false,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@shared/*": ["shared/*"]
     }
   },
   "include": [
@@ -22,7 +23,8 @@
     "src/content/**/*.ts",
     "src/types/**/*.ts",
     "src/services/**/*.ts",
-    "src/env.d.ts"
+    "src/env.d.ts",
+    "shared/**/*.ts"
   ],
   "exclude": [
     "node_modules"

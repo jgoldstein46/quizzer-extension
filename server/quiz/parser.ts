@@ -1,33 +1,4 @@
-/**
- * Quiz Response Parser
- * Extracts and structures questions returned by Claude into a standardized quiz format
- */
-
-/**
- * Question data structure
- */
-export interface QuizQuestion {
-  id: number;
-  type: 'multiple_choice' | 'open_ended' | 'true_false' | 'fill_in_blank';
-  text: string;
-  options?: string[];
-  correctAnswer: string;
-  explanation?: string;
-}
-
-/**
- * Quiz data structure
- */
-export interface Quiz {
-  questions: QuizQuestion[];
-  metadata?: {
-    title?: string;
-    generatedAt: string;
-    quizType?: string;
-    articleUrl?: string;
-  };
-  error?: string;
-}
+import { Quiz, QuizQuestion } from "@shared/schema";
 
 /**
  * Parsing options

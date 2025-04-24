@@ -223,8 +223,6 @@ export class QuizController {
       
       const storedQuiz = await QuizStorage.saveQuiz(quizWithRequiredMetadata, {
         tabId: request.tabId,
-        url: request.articleUrl,
-        title: request.articleTitle,
         metadata: {
           articleWordCount: request.articleMetadata?.wordCount,
           articleReadTime: request.articleMetadata?.readTime,

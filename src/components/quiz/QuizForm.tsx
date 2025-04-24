@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Quiz } from '../../services/quiz/parser';
+import { Quiz } from '@shared/schema';
 import { Button } from '../ui/button';
 import { RotateCcw } from 'lucide-react';
 import QuizQuestion from './QuizQuestion';
@@ -19,11 +19,9 @@ const QuizForm = ({ quiz, onSubmit, isSubmitting = false }: QuizFormProps) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<UserAnswer[]>([]);
   const [validationErrors, setValidationErrors] = useState<{ [key: number]: string }>({});
-  const [showConfirmation, setShowConfirmation] = useState(false);
   // Duolingo-style state for MCQ grading
   const [isGraded, setIsGraded] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-  const [, setSubmitted] = useState(false);
   const [quizFinished, setQuizFinished] = useState(false);
 
   // Count number of correct answers for summary
@@ -58,11 +56,9 @@ const QuizForm = ({ quiz, onSubmit, isSubmitting = false }: QuizFormProps) => {
     setCurrentQuestionIndex(0);
     setAnswers(quiz.questions.map(q => ({ questionId: q.id, answer: '' })));
     setValidationErrors({});
-    setShowConfirmation(false);
     setQuizFinished(false);
     setIsGraded(false);
     setIsCorrect(null);
-    setSubmitted(false);
   };
 
 
@@ -141,12 +137,6 @@ const QuizForm = ({ quiz, onSubmit, isSubmitting = false }: QuizFormProps) => {
     return true;
   };
 
-  const goToPreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
-    }
-  };
-
   // For MCQ: grade or advance
   const handleContinue = () => {
     if (currentQuestion.type === 'multiple_choice') {
@@ -167,6 +157,7 @@ const QuizForm = ({ quiz, onSubmit, isSubmitting = false }: QuizFormProps) => {
           setCurrentQuestionIndex(currentQuestionIndex + 1);
         } else {
           setQuizFinished(true);
+          onSubmit(answers);
         }
       }
     } else {
@@ -177,28 +168,6 @@ const QuizForm = ({ quiz, onSubmit, isSubmitting = false }: QuizFormProps) => {
         }
       }
     }
-  };
-
-  const handleSubmit = () => {
-    if (validateCurrentQuestion()) {
-      // Check if all questions have answers
-      const unansweredQuestions = answers.filter(a => !a.answer.trim());
-      
-      if (unansweredQuestions.length > 0) {
-        setShowConfirmation(true);
-      } else {
-        onSubmit(answers);
-      }
-    }
-  };
-
-  const confirmSubmit = () => {
-    setShowConfirmation(false);
-    onSubmit(answers);
-  };
-
-  const cancelSubmit = () => {
-    setShowConfirmation(false);
   };
 
   const getCurrentAnswerForQuestion = (questionId: number): string => {
@@ -245,46 +214,14 @@ const QuizForm = ({ quiz, onSubmit, isSubmitting = false }: QuizFormProps) => {
               </div>
             )}
             <div className="quiz-navigation flex flex-col gap-3 mt-6">
-              {currentQuestion.type === 'multiple_choice' ? (
-                <Button
-                  type="button"
-                  onClick={handleContinue}
-                  disabled={isSubmitting || !getCurrentAnswerForQuestion(currentQuestion.id)}
-                  className="w-full shadow-lg py-3 text-base font-semibold"
-                >
-                  {isGraded ? (currentQuestionIndex < totalQuestions - 1 ? 'Continue' : 'Finish Quiz') : 'Check Answer'}
-                </Button>
-              ) : (
-                currentQuestionIndex < totalQuestions - 1 ? (
-                  <Button
-                    type="button"
-                    onClick={handleContinue}
-                    disabled={isSubmitting}
-                    className="w-full shadow-lg py-3 text-base font-semibold"
-                  >
-                    Next
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      handleSubmit();
-                      setSubmitted(true);
-                    }}
-                    disabled={isSubmitting}
-                    className="w-full shadow-lg py-3 text-base font-semibold"
-                  >
-                    {isSubmitting ? (
-                      <div className="flex items-center">
-                        <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent mr-2"></div>
-                        <span>Submitting...</span>
-                      </div>
-                    ) : (
-                      'Submit Answers'
-                    )}
-                  </Button>
-                )
-              )}
+              <Button
+                type="button"
+                onClick={handleContinue}
+                disabled={isSubmitting || !getCurrentAnswerForQuestion(currentQuestion.id)}
+                className="w-full shadow-lg py-3 text-base font-semibold"
+              >
+                {isGraded ? (currentQuestionIndex < totalQuestions - 1 ? 'Continue' : 'Finish Quiz') : 'Check Answer'}
+              </Button>
             </div>
             {/* Feedback for MCQ */}
             {currentQuestion.type === 'multiple_choice' && isGraded && (
@@ -304,30 +241,6 @@ const QuizForm = ({ quiz, onSubmit, isSubmitting = false }: QuizFormProps) => {
                 ></div>
               </div>
             </div>
-            {showConfirmation && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-                  <h3 className="text-lg font-medium mb-3">Submit Incomplete Quiz?</h3>
-                  <p className="text-gray-600 mb-4">
-                    Some questions are still unanswered. Are you sure you want to submit your quiz?
-                  </p>
-                  <div className="flex space-x-3">
-                    <Button
-                      onClick={cancelSubmit}
-                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={confirmSubmit}
-                      className="flex-1 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-                    >
-                      Submit Anyway
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
           </>
         ) : (
           <div className="text-center p-6 bg-gray-50 rounded-md">

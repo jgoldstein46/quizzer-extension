@@ -3,7 +3,7 @@
  * Handles saving, retrieving, and managing quizzes in local browser storage
  */
 
-import { Quiz, QuizQuestion } from './parser';
+import { Quiz, QuizQuestion } from '@shared/schema';
 
 /**
  * Key used for storing quizzes in browser storage
@@ -26,12 +26,24 @@ export interface StoredQuiz {
   createdAt: string;
   updatedAt: string;
   questions: QuizQuestion[];
+  /**
+   * metadata fields for quiz history and analytics:
+   * - articleWordCount: number of words in article
+   * - articleReadTime: estimated read time
+   * - quizType: type of quiz
+   * - generatedAt: ISO string of quiz creation
+   * - numCorrect: number of questions the user got right (optional, set after completion)
+   * - completed: whether the quiz was completed (optional)
+   * - any additional custom metadata
+   */
   metadata: {
     articleWordCount?: number;
     articleReadTime?: number;
     quizType?: string;
     [key: string]: any;
     generatedAt?: string;
+    numCorrect?: number;
+    completed?: boolean;
   };
 }
 

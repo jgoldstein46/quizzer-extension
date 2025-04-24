@@ -1,12 +1,14 @@
-import { Quiz } from '@/services/quiz';
-import { getQuizByTabId } from '@/services/quiz/storage';
+import { getQuizById, getQuizByTabId, getQuizByUrl, saveQuiz, updateQuiz } from '@/services/quiz/storage';
+import { Quiz } from '@shared/schema';
+import { Clock } from 'lucide-react';
 import { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
 import '../App.css';
 import quizzerLogo from '../assets/quizzer-logo.png';
 import ErrorBoundary from './ErrorBoundary';
 import Onboarding from './Onboarding';
 import { UserPreferences } from './UserSettings';
-import { QuizForm } from './quiz';
+import { QuizForm, UserAnswer } from './quiz';
+import QuizHistory from './quiz/QuizHistory';
 import { Button } from './ui/button';
 import {
   Dialog,
@@ -39,8 +41,9 @@ function App() {
   
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
-  const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [, setSelectedQuizId] = useState<string | null>(null);
   
   const extractButtonRef = useRef<HTMLButtonElement>(null);
   const generateButtonRef = useRef<HTMLButtonElement>(null);
@@ -188,13 +191,11 @@ function App() {
   };
 
   const generateQuiz = async () => {
-  
-    
-      if (!articleContent || !articleData) {
-        setExtractionStatus('error');
-        setIsLoading(false);
-        return;
-      }
+    if (!articleContent || !articleData) {
+      setExtractionStatus('error');
+      setIsLoading(false);
+      return;
+    }
       console.log("Setting loading to true");
       setIsLoading(true);
       console.log('Generating quiz, about to fetch settings');
@@ -226,6 +227,18 @@ function App() {
       console.log('Quiz generation response:', data);
       if (data && data.quiz) {
         console.log('Quiz generated successfully');
+        // Store the quiz
+        await saveQuiz({
+          questions: data.quiz.questions,
+          metadata: {
+            articleReadTime: articleContent.readTime,
+            articleUrl: articleData.url,
+            title: articleData.title,
+            generatedAt: new Date().toISOString(),
+            completed: false,
+            numCorrect: undefined
+          }
+        }, {});
         setQuiz(data.quiz);
         setExtractionStatus('success');
         setShowSuccessFeedback(true);
@@ -295,6 +308,100 @@ function App() {
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
+  };
+  
+  const handleToggleHistory = () => {
+    setShowHistory(prev => !prev);
+  };
+  
+  const handleSelectQuiz = async (quizId: string) => {
+    setSelectedQuizId(quizId);
+    setShowHistory(false);
+    setIsLoading(true);
+    
+    try {
+      // Load the selected quiz
+      const storedQuiz = await getQuizById(quizId);
+      
+      if (storedQuiz) {
+        // Convert StoredQuiz to Quiz format
+        setQuiz({
+          questions: storedQuiz.questions,
+          metadata: {
+            title: storedQuiz.title,
+            generatedAt: storedQuiz.metadata.generatedAt || storedQuiz.createdAt,
+            quizType: storedQuiz.metadata.quizType,
+            articleUrl: storedQuiz.url,
+            ...storedQuiz.metadata
+          }
+        });
+        
+        // Set article data if needed for context
+        setArticleData({
+          title: storedQuiz.title,
+          url: storedQuiz.url
+        });
+        
+        // Set article content if we have it
+        if (storedQuiz.metadata.articleWordCount || storedQuiz.metadata.articleReadTime) {
+          setArticleContent({
+            title: storedQuiz.title,
+            byline: '',
+            excerpt: 'Loaded from history',
+            textContent: '',
+            wordCount: storedQuiz.metadata.articleWordCount || 0,
+            readTime: storedQuiz.metadata.articleReadTime || 0
+          });
+          setExtractionStatus('success');
+        }
+        
+        console.log(`Loaded quiz from history: ${quizId}`);
+      } else {
+        console.error(`Quiz not found: ${quizId}`);
+      }
+    } catch (error) {
+      console.error('Error loading quiz:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle quiz submission and save completion data
+  const handleQuizSubmit = async (answers: UserAnswer[]) => {
+    if (!quiz || !articleData) return;
+    
+    // Calculate number of correct answers
+    const numCorrect = quiz.questions.reduce((acc, q) => {
+      const userAnswer = answers.find(a => a.questionId === q.id);
+      if (!userAnswer) return acc;
+      
+      if (q.type === 'multiple_choice') {
+        const correctIndex = typeof q.correctAnswer === 'number' ? q.correctAnswer : parseInt(q.correctAnswer);
+        const selectedIndex = Array.isArray(q.options)
+          ? q.options.findIndex(opt => opt === userAnswer.answer)
+          : -1;
+        if (selectedIndex === correctIndex) return acc + 1;
+      } else {
+        throw new Error(`Unsupported question type: ${q.type}`);
+      }
+      return acc;
+    }, 0);
+    
+    // Get current quiz by URL
+    const storedQuiz = await getQuizByUrl(articleData.url);
+        
+    if (storedQuiz) {
+      // Update the quiz with completion data
+      await updateQuiz(storedQuiz.id, {
+        metadata: {
+          ...storedQuiz.metadata,
+          numCorrect,
+          completed: true
+        }
+      });
+      
+      console.log(`Quiz completed with ${numCorrect}/${quiz.questions.length} correct answers`);
+    }
   };
 
   const appContent = (
@@ -374,7 +481,7 @@ function App() {
               {quiz ? 
                 <QuizForm
                   quiz={quiz}
-                  onSubmit={() => console.log('Quiz submitted')}
+                  onSubmit={handleQuizSubmit}
                   />
                   :
                 <button
@@ -424,9 +531,18 @@ function App() {
           role="region"
           aria-labelledby="how-to-use"
         >
-          <div className="flex items-center mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 id="how-to-use" className="font-medium">How to use Quizzer:</h3>
+            <Button
+              onClick={handleToggleHistory}
+              variant="outline"
+              className="text-xs px-2 py-1 h-auto flex items-center"
+              title="View quiz history"
+            >
+              <Clock size={14} className="mr-1" />
+            </Button>
   </div>
-<h3 id="how-to-use" className="font-medium mb-2">How to use Quizzer:</h3>
+
           <ol className="list-decimal list-inside text-sm space-y-1">
             <li>Navigate to an article you want to quiz yourself on</li>
             <li>Open this sidebar by clicking the Quizzer icon</li>
@@ -452,6 +568,17 @@ function App() {
         onClose={() => setShowOnboarding(false)}
         onComplete={handleOnboardingComplete} 
       />
+      
+      {showHistory && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <QuizHistory 
+              onSelectQuiz={handleSelectQuiz}
+              onClose={() => setShowHistory(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 

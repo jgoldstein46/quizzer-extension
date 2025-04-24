@@ -3,7 +3,7 @@
  * Handles saving, retrieving, and managing quizzes in local browser storage
  */
 
-import { Quiz, QuizQuestion } from './parser';
+import { Quiz, QuizQuestion } from '@shared/schema';
 
 /**
  * Key used for storing quizzes in browser storage
@@ -30,6 +30,7 @@ export interface StoredQuiz {
     articleWordCount?: number;
     articleReadTime?: number;
     quizType?: string;
+    completed?: boolean;
     [key: string]: any;
     generatedAt?: string;
   };
@@ -40,8 +41,6 @@ export interface StoredQuiz {
  */
 export interface SaveQuizOptions {
   tabId?: number;
-  url: string;
-  title: string;
   metadata?: {
     articleWordCount?: number;
     articleReadTime?: number;
@@ -58,8 +57,8 @@ export async function saveQuiz(quiz: Quiz, options: SaveQuizOptions): Promise<St
   const storedQuiz: StoredQuiz = {
     id: generateQuizId(),
     tabId: options.tabId,
-    url: options.url,
-    title: options.title,
+    url: quiz.metadata!.articleUrl!,
+    title: quiz.metadata!.title!,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     questions: quiz.questions,

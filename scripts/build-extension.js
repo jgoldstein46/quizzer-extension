@@ -146,7 +146,8 @@ const bundleScripts = () => {
     console.log('Bundling scripts with dependencies...');
     
     // Bundle background script
-    exec('npx esbuild dist/temp/background/background.js --bundle --outfile=dist/background.js --format=esm',
+    console.log('Bundling background: dist/temp/src/background/background.js');
+    exec('npx esbuild dist/temp/src/background/background.js --bundle --outfile=dist/background.js --format=esm',
       { cwd: rootDir },
       (error, stdout, stderr) => {
         if (error) {
@@ -159,7 +160,8 @@ const bundleScripts = () => {
         console.log('Background script bundled successfully');
         
         // Bundle content script
-        exec('npx esbuild dist/temp/content/content.js --bundle --outfile=dist/content.js --format=iife',
+        console.log('Bundling content: dist/temp/src/content/content.js');
+        exec('npx esbuild dist/temp/src/content/content.js --bundle --outfile=dist/content.js --format=iife',
           { cwd: rootDir },
           (error, stdout, stderr) => {
             if (error) {
