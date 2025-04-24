@@ -285,6 +285,17 @@ html, body, #root {
   }
 }
 
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 @keyframes pulse {
   0% {
     transform: scale(1);
@@ -303,6 +314,10 @@ html, body, #root {
 
 .animate-slide-in {
   animation: slideIn var(--transition-normal) ease;
+}
+
+.animate-slide-in-from-top {
+  animation: slideInFromTop var(--transition-normal) ease;
 }
 
 .animate-pulse {
@@ -496,9 +511,7 @@ textarea:focus {
   --text-2xl: 1.25rem;   /* 20px */
 }
 
-.text-medium {
-  /* Default sizes remain as they are */
-}
+/* text-medium uses the default font sizes defined at the root level */
 
 .text-large {
   --text-xs: 0.875rem;  /* 14px */

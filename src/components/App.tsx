@@ -38,6 +38,7 @@ function App() {
   const [showSuccessFeedback, setShowSuccessFeedback] = useState(false);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [helpDialogOpen, setHelpDialogOpen] = useState(false);
+  const [historyButtonRef, setHistoryButtonRef] = useState<HTMLButtonElement | null>(null);
   
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
@@ -274,19 +275,9 @@ function App() {
     );
   };
 
-  // Help Button + Dialog using shadcn/ui
+  // Keyboard shortcuts dialog
   const renderKeyboardShortcutsHelp = () => (
     <Dialog open={helpDialogOpen} onOpenChange={setHelpDialogOpen}>
-      <Button
-        variant="outline"
-        size="sm"
-        ref={helpButtonRef}
-        className="fixed top-6 right-6 z-50 shadow-md text-white"
-        aria-label="Show keyboard shortcuts help"
-        onClick={() => setHelpDialogOpen(true)}
-      >
-        Help
-      </Button>
       <DialogContent className="dialog-content">
         <DialogHeader className="dialog-header">
           <DialogTitle className="dialog-title" id="keyboard-shortcuts-title">Keyboard Shortcuts</DialogTitle>
@@ -314,7 +305,7 @@ function App() {
     setShowHistory(prev => !prev);
   };
   
-  const handleSelectQuiz = async (quizId: string) => {
+  const handleSelectQuiz = async (quizId: string, mode?: 'retake' | 'focus') => {
     setSelectedQuizId(quizId);
     setShowHistory(false);
     setIsLoading(true);
@@ -324,6 +315,14 @@ function App() {
       const storedQuiz = await getQuizById(quizId);
       
       if (storedQuiz) {
+        // Handle different modes
+        if (mode === 'retake') {
+          console.log('Retaking quiz with +25 XP');
+          // Here you would implement the retake functionality
+        } else if (mode === 'focus') {
+          console.log('Focusing on difficult challenges with +40 XP');
+          // Here you would implement the focus on difficult challenges functionality
+        }
         // Convert StoredQuiz to Quiz format
         setQuiz({
           questions: storedQuiz.questions,
@@ -531,17 +530,9 @@ function App() {
           role="region"
           aria-labelledby="how-to-use"
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4">
             <h3 id="how-to-use" className="font-medium">How to use Quizzer:</h3>
-            <Button
-              onClick={handleToggleHistory}
-              variant="outline"
-              className="text-xs px-2 py-1 h-auto flex items-center"
-              title="View quiz history"
-            >
-              <Clock size={14} className="mr-1" />
-            </Button>
-  </div>
+          </div>
 
           <ol className="list-decimal list-inside text-sm space-y-1">
             <li>Navigate to an article you want to quiz yourself on</li>
@@ -553,6 +544,32 @@ function App() {
           </ol>
         </div>
       </div>
+      {/* Top right corner buttons */}
+      <div className="fixed top-2 right-2 flex items-center space-x-2 z-40">
+        <Button
+          onClick={handleToggleHistory}
+          variant="ghost"
+          size="sm"
+          className="p-1 h-8 w-8 rounded-full flex items-center justify-center"
+          title="View quiz history"
+          ref={(ref) => setHistoryButtonRef(ref)}
+        >
+          <Clock size={16} />
+        </Button>
+        
+          <Button
+            ref={helpButtonRef}
+            onClick={() => setHelpDialogOpen(true)}
+            variant="ghost"
+            size="sm"
+            className="p-1 h-8 w-8 rounded-full flex items-center justify-center"
+            title="Keyboard shortcuts (Press ?)"
+          >
+            <span className="text-sm font-semibold">?</span>
+          </Button>
+        
+      </div>
+
       {renderKeyboardShortcutsHelp()}
       
       <footer 
@@ -569,9 +586,12 @@ function App() {
         onComplete={handleOnboardingComplete} 
       />
       
-      {showHistory && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+      {showHistory && historyButtonRef && (
+        <div className="fixed inset-0 z-50 pointer-events-none">
+          <div 
+            className="absolute top-12 right-2 bg-white p-4 rounded-lg shadow-lg w-80 max-h-[80vh] overflow-y-auto pointer-events-auto animate-slide-in-from-top"
+            style={{ maxWidth: 'calc(100vw - 16px)', transformOrigin: 'top right' }}
+          >
             <QuizHistory 
               onSelectQuiz={handleSelectQuiz}
               onClose={() => setShowHistory(false)}
